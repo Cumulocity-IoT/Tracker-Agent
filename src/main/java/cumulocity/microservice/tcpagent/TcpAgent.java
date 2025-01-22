@@ -15,15 +15,5 @@ import org.springframework.retry.annotation.EnableRetry;
 public class TcpAgent {
     public static void main (String[] args) {
         SpringApplication.run(TcpAgent.class, args);
-
-        ObjectMapper ob = new ObjectMapper();
-        log.info("empty obj: {}", ob.createObjectNode());
-        log.info("empty obj: {}", ob.createArrayNode().add("c8y"));
     }
-
-    @EventListener
-    public void onConnectionClose(TcpConnectionCloseEvent event) {
-        log.info("Disconnect {}", event);
-    }
-
 }
