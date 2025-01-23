@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: c8y-tracker-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: c8y-tracker-agent
+  template:
+    metadata:
+      labels:
+        app: c8y-tracker-agent
+    spec:
+      containers:
+      - name: c8y-tracker-agent
+        image: tcp-agent:1.0  # Replace with your Docker image
+        env:
+        - name: C8Y_BOOTSTRAP_TENANT  # Add your environment variables here
+          value: "t11974744"  # Example value for MY_ENV_VAR
+        ports:
+        - containerPort: 8888  # Port exposed inside the container
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: c8y-tracker-agent-service
+spec:
+  selector:
+    app: c8y-tracker-agent
+  ports:
+    - protocol: TCP
+      port: 8888   # Port exposed by the service
+      targetPort: 8888  # Internal port inside the container
+  type: NodePort
