@@ -25,7 +25,7 @@ public class Codec12Message {
         buffer.putShort((short) crc16);
 
         this.cmd = extractFinalMessage(buffer);
-        log.info("Codec12 prepared command: {}", bytesToHex(this.cmd));
+        log.debug("Codec12 prepared command: {}", bytesToHex(this.cmd));
 
         return this.cmd;
     }

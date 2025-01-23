@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cumulocity.microservice</groupId>
-	<artifactId>cumulocity-microservice-tcp-agent</artifactId>
+	<artifactId>c8y-tracker-agent</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 
 	<properties>
@@ -15,7 +15,7 @@
 		<spring-integration-dependencies.version>6.3.5</spring-integration-dependencies.version>
 		<c8y.version>1020.155.0</c8y.version>
 		<microservice.name>tcp-agent</microservice.name>
-		<c8y.docker.skip>true</c8y.docker.skip>
+		<c8y.docker.skip>false</c8y.docker.skip>
 	</properties>
 
 	<dependencyManagement>
