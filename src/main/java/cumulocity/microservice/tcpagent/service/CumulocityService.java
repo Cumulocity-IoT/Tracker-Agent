@@ -238,15 +238,17 @@ public class CumulocityService {
         try {
             String cmd = processCommand.extractCommandText(operation);
             if (cmd != null && !cmd.isEmpty()) {
-                updateOperationStatus(operation, "EXECUTING");
+                updateOperationStatus(operation, OperationStatus.EXECUTING.name());
                 byte[] command = codec12Message.prepareCodec12Message((byte) 0x0C, (short) 1, cmd);
                 processCommand.sendCommandToDevice(imei, command);
                 log.info("Sent command '{}' to connection: {}", codec12Message.bytesToHex(command), imei);
-                updateOperationStatus(operation, "SUCCESSFUL");
+                updateOperationStatus(operation, OperationStatus.SUCCESSFUL.name());
             } else {
                 log.warn("No valid command text found for operation: {}", operation);
             }
         } catch (Exception e) {
+            operation.setFailureReason(e.getMessage());
+            updateOperationStatus(operation, OperationStatus.FAILED.name());
             log.error("Error processing operation for IMEI {}: {}", imei, e.getMessage(), e);
         }
     }
