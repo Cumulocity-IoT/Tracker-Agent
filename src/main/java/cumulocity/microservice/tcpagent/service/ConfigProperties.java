@@ -21,6 +21,7 @@ public class ConfigProperties {
     private String eventTypeTeltonika;
     private String eventDescTeltonika;
     private String supportedOperations;
+    private int bigDecimalFactor;
 
     // Static fields for environment variables
     public static final String C8Y_BOOTSTRAP_TENANT = System.getenv("C8Y_BOOTSTRAP_TENANT");
