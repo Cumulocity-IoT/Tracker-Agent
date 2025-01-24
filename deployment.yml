@@ -19,7 +19,8 @@ spec:
         - name: C8Y_BOOTSTRAP_TENANT  # Add your environment variables here
           value: "t11974744"  # Example value for MY_ENV_VAR
         ports:
-        - containerPort: 8888  # Port exposed inside the container
+        - containerPort: 8888  # TCP Port exposed inside the container
+        - containerPort: 8080  # HTTP Port exposed inside the container
 ---
 apiVersion: v1
 kind: Service
@@ -32,4 +33,11 @@ spec:
     - protocol: TCP
       port: 8888   # Port exposed by the service
       targetPort: 8888  # Internal port inside the container
+      name: tcp
+      nodePort: 30000
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      name: http
+      nodePort: 30001
   type: NodePort
