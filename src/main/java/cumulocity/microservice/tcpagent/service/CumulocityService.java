@@ -1,7 +1,10 @@
 package cumulocity.microservice.tcpagent.service;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import c8y.IsDevice;
 import c8y.Position;
 import c8y.RequiredAvailability;
@@ -9,7 +12,6 @@ import com.cumulocity.microservice.subscription.service.MicroserviceSubscription
 import com.cumulocity.model.ID;
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.model.operation.OperationStatus;
-import com.cumulocity.model.option.OptionPK;
 import com.cumulocity.rest.representation.event.EventRepresentation;
 import com.cumulocity.rest.representation.identity.ExternalIDRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjects;
@@ -43,20 +45,6 @@ import com.cumulocity.sdk.client.option.TenantOptionApi;
 @AllArgsConstructor
 public class CumulocityService {
 
-    private static final String ID_TYPE = "c8y_IMEI";
-    private static final String MO_TYPE = "c8y_Tracker";
-    private static final String MO_NAME_PREFIX = "Tracker-";
-    private static final int C8Y_REQUIRED_INTERVAL = 15;  //minutes
-    private static final String TCP_AGENT_DEVICE_TENANT_MAPPING = "TCP_AGENT_DEVICE_TENANT_MAPPING";
-    private static final String TCP_AGENT_CATEGORY = "TCP_AGENT";
-    private static final String TCP_AGENT_KEY = "DEFAULT_TENANT";
-    private static final String EVENT_TYPE_LOCATION = "c8y_LocationUpdate";
-    private static final String EVENT_DESC_LOCATION = "Location Update";
-    private static final String EVENT_TYPE_TELTONIKA = "Teltonika_Events";
-    private static final String EVENT_DESC_TELTONIKA = "Teltonika Events";
-    private static String C8Y_BOOTSTRAP_TENANT = System.getenv("C8Y_BOOTSTRAP_TENANT");
-    private static String C8Y_DEFAULT_TENANT;
-
     private InventoryApi inventoryApi;
     private IdentityApi identityApi;
     private EventApi eventApi;
@@ -65,6 +53,7 @@ public class CumulocityService {
     private TenantOptionApi tenantOptionApi;
     private ProcessCommand processCommand;
     private final Codec12Message codec12Message;
+    private final ConfigProperties config;
 
     @PostConstruct
     public void init() {
@@ -75,8 +64,8 @@ public class CumulocityService {
         try {
             String tenant = GlobalConnectionStore.getImeiToTenant()
                 .computeIfAbsent(imei, key -> {
-                    saveTenantOption(TCP_AGENT_DEVICE_TENANT_MAPPING, imei, C8Y_DEFAULT_TENANT);
-                    return C8Y_DEFAULT_TENANT;
+                    saveTenantOption(config.getDeviceTenantMapping(), imei, ConfigProperties.C8Y_DEFAULT_TENANT);
+                    return ConfigProperties.C8Y_DEFAULT_TENANT;
                 });
 
             updateConnectionInfo(connectionID, imei);
@@ -99,7 +88,7 @@ public class CumulocityService {
     private void processDeviceCreation(String imei, String connectionID) {
         GlobalConnectionStore.getImeiToConn().computeIfAbsent(imei, key -> {
             try {
-                ExternalIDRepresentation xId = identityApi.getExternalId(new ID(ID_TYPE, imei));
+                ExternalIDRepresentation xId = identityApi.getExternalId(new ID(config.getIdType(), imei));
                 return new DeviceConnectionInfo(connectionID, imei, xId.getManagedObject().getId().getValue());
             } catch (SDKException e) {
                 if (e.getHttpStatus() == HttpStatus.SC_NOT_FOUND) {
@@ -119,22 +108,24 @@ public class CumulocityService {
 
     private String createNewDevice(String imei, String connectionID) {
         ManagedObjectRepresentation device = new ManagedObjectRepresentation();
-        device.setName(MO_NAME_PREFIX + imei);
-        device.setType(MO_TYPE);
+        device.setName(config.getMoNamePrefix() + imei);
+        device.setType(config.getMoType());
         device.set(new IsDevice());
 
         RequiredAvailability requiredAvailability = new RequiredAvailability();
-        requiredAvailability.setResponseInterval(C8Y_REQUIRED_INTERVAL);
+        requiredAvailability.setResponseInterval(config.getC8yRequiredInterval());
         device.set(requiredAvailability);
 
         device.setProperty("com_cumulocity_model_Agent", new Object());
-        device.setProperty("c8y_SupportedOperations", List.of("c8y_Command"));
+        device.setProperty("c8y_SupportedOperations", Arrays.stream(config.getSupportedOperations().split(","))
+        .map(String::trim) // Trim any leading or trailing spaces
+        .collect(Collectors.toList()));
 
         try {
             device = inventoryApi.create(device);
 
             ExternalIDRepresentation externalIDRepresentation = new ExternalIDRepresentation();
-            externalIDRepresentation.setType(ID_TYPE);
+            externalIDRepresentation.setType(config.getIdType());
             externalIDRepresentation.setExternalId(imei);
             externalIDRepresentation.setManagedObject(ManagedObjects.asManagedObject(device.getId()));
             identityApi.create(externalIDRepresentation);
@@ -171,12 +162,12 @@ public class CumulocityService {
     }
 
     private void createLocationEvent(AvlEntry avlEntry, String id) {
-        EventRepresentation event = createEvent(EVENT_TYPE_LOCATION, EVENT_DESC_LOCATION, id, avlEntry);
+        EventRepresentation event = createEvent(config.getEventTypeLocation(), config.getEventDescLocation(), id, avlEntry);
         eventApi.create(event);
     }
 
     private void createTeltonikaEvent(AvlEntry avlEntry, String id) {
-        EventRepresentation event = createEvent(EVENT_TYPE_TELTONIKA, EVENT_DESC_TELTONIKA, id, avlEntry);
+        EventRepresentation event = createEvent(config.getEventTypeLocation(), config.getEventDescTeltonika(), id, avlEntry);
         eventApi.create(event);
     }
 
@@ -260,16 +251,16 @@ public class CumulocityService {
     }
 
     public void loadDefaultTenantOptions() {
-        log.info("Loading C8Y_BOOTSTRAP_TENANT Id: {}", C8Y_BOOTSTRAP_TENANT);
-        microserviceSubscriptionsService.runForTenant(C8Y_BOOTSTRAP_TENANT, () -> {
+        log.info("Loading C8Y_BOOTSTRAP_TENANT Id: {}", ConfigProperties.C8Y_BOOTSTRAP_TENANT);
+        microserviceSubscriptionsService.runForTenant(ConfigProperties.C8Y_BOOTSTRAP_TENANT, () -> {
             loadDeviceToTenantMappings();
-            loadDefaultTenantOption();
+            setDefaultTenant();
         });
     }
 
     private void loadDeviceToTenantMappings() {
         try {
-            tenantOptionApi.getAllOptionsForCategory(TCP_AGENT_DEVICE_TENANT_MAPPING).forEach(or -> {
+            tenantOptionApi.getAllOptionsForCategory(config.getDeviceTenantMapping()).forEach(or -> {
                 GlobalConnectionStore.getImeiToTenant().put(or.getKey(), or.getValue());
                 log.info("Tenant Device Map Entry: Key = {}, Value = {}", or.getKey(), or.getValue());
             });
@@ -278,33 +269,22 @@ public class CumulocityService {
         }
     }
 
-    private void loadDefaultTenantOption() {
+    private void setDefaultTenant() {
         try {
-            OptionPK op = new OptionPK();
-            op.setCategory(TCP_AGENT_CATEGORY);
-            op.setKey(TCP_AGENT_KEY);
-            C8Y_DEFAULT_TENANT = tenantOptionApi.getOption(op).getValue();
-            log.info("C8Y_DEFAULT_TENANT: {}", C8Y_DEFAULT_TENANT);
-        } catch (SDKException e) {
-            handleDefaultTenantOptionError(e);
+            if (ConfigProperties.C8Y_DEFAULT_TENANT == null) {
+                ConfigProperties.C8Y_DEFAULT_TENANT = ConfigProperties.C8Y_BOOTSTRAP_TENANT;
+                log.info("Default tenant not found. Setting C8Y_BOOTSTRAP_TENANT as C8Y_DEFAULT_TENANT: {}", ConfigProperties.C8Y_DEFAULT_TENANT);
+            } else {
+                log.info("C8Y_DEFAULT_TENANT already set: {}", ConfigProperties.C8Y_DEFAULT_TENANT);
+            }
         } catch (Exception e) {
-            log.error("Unexpected error while loading tenant option: {}", e.getMessage(), e);
+            log.error("Error while setting the default tenant: {}", e.getMessage(), e);
         }
     }
-
-    private void handleDefaultTenantOptionError(SDKException e) {
-        if (e.getHttpStatus() == HttpStatus.SC_NOT_FOUND) {
-            saveTenantOption(TCP_AGENT_CATEGORY, TCP_AGENT_KEY, C8Y_BOOTSTRAP_TENANT);
-            C8Y_DEFAULT_TENANT = C8Y_BOOTSTRAP_TENANT;
-            log.info("Default tenant not found. Set C8Y_DEFAULT_TENANT as C8Y_BOOTSTRAP_TENANT: {}", C8Y_BOOTSTRAP_TENANT);
-        } else {
-            log.error("Failed to save default tenant option mapping: {}", e.getMessage(), e);
-            throw e;
-        }
-    }
+    
 
     public void saveTenantOption(String category, String key, String value) {
-        microserviceSubscriptionsService.runForTenant(C8Y_BOOTSTRAP_TENANT, () -> {
+        microserviceSubscriptionsService.runForTenant(ConfigProperties.C8Y_BOOTSTRAP_TENANT, () -> {
             try {
                 OptionRepresentation or = new OptionRepresentation();
                 or.setCategory(category);

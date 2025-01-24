@@ -41,7 +41,7 @@ def simulate_teltonika_device(server_host, server_port, message_hex, base64_msg=
 # Example Usage
 if __name__ == "__main__":
     SERVER_HOST = "localhost"#"0.tcp.in.ngrok.io"  # Replace with the server's IP address
-    SERVER_PORT = 8888 #10463        # Replace with the server's listening port
+    SERVER_PORT = 8888#10463        # Replace with the server's listening port
 
     # Sample messages
     message_hex1 = '000F333536333037303432343431303134'
