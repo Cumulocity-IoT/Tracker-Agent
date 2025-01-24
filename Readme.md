@@ -26,7 +26,23 @@ The microservice uses three maps for temporary data storage:
    - Java17, Maven 3.6 and docker latest must be installed on the machin to build this microservice docker image
    - Using below maven command this could be built
      ```cmd
-      mvn clean install
+      cd {project root directory}
+      ```
+      Build the microservice
+      ```cmd
+      mvn clean install 
+      ```
+      Change Directory
+      ```cmd
+      cd target/docker-work
+      ```
+      Build the microservice & upload in local docker repo
+      ```cmd
+      docker build -t tcp-agent:1.0 .
+      ```
+      deploy the microservice
+      ```cmd
+      kubectl apply -f deployment.yml 
       ```
    - Prerequisite
      - Java 17 or later
