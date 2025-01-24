@@ -162,25 +162,25 @@ public class CumulocityService {
     }
 
     private void createLocationEvent(AvlEntry avlEntry, String id) {
-        EventRepresentation event = createEvent(config.getEventTypeLocation(), config.getEventDescLocation(), id, avlEntry);
-        eventApi.create(event);
-    }
-
-    private void createTeltonikaEvent(AvlEntry avlEntry, String id) {
-        EventRepresentation event = createEvent(config.getEventTypeLocation(), config.getEventDescTeltonika(), id, avlEntry);
-        eventApi.create(event);
-    }
-
-    private EventRepresentation createEvent(String eventType, String eventDesc, String id, AvlEntry avlEntry) {
         EventRepresentation event = new EventRepresentation();
-        event.setType(eventType);
-        event.setText(eventDesc);
+        event.setType(config.getEventTypeLocation());
+        event.setText(config.getEventDescLocation());
         event.setDateTime(new DateTime());
         event.set(buildPosition(avlEntry));
 
         event.setSource(ManagedObjects.asManagedObject(GId.asGId(id)));
-        event.set(avlEntry, eventType);
-        return event;
+        eventApi.create(event);
+    }
+
+    private void createTeltonikaEvent(AvlEntry avlEntry, String id) {
+        EventRepresentation event = new EventRepresentation();
+        event.setType(config.getEventTypeTeltonika());
+        event.setText(config.getEventDescTeltonika());
+        event.setDateTime(new DateTime());
+
+        event.setSource(ManagedObjects.asManagedObject(GId.asGId(id)));
+        event.set(avlEntry, config.getEventTypeTeltonika());
+        eventApi.create(event);
     }
 
     private void updateManagedObjectLocation(AvlEntry avlEntry, String id) {
@@ -193,8 +193,8 @@ public class CumulocityService {
     private Position buildPosition(AvlEntry avlEntry) {
         Position position = new Position();
         position.setAlt(BigDecimal.valueOf(avlEntry.getAltitude()));
-        position.setLat(BigDecimal.valueOf(avlEntry.getLatitude()).divide(BigDecimal.valueOf(10000000)));
-        position.setLng(BigDecimal.valueOf(avlEntry.getLongitude()).divide(BigDecimal.valueOf(10000000)));
+        position.setLat(BigDecimal.valueOf(avlEntry.getLatitude()).divide(BigDecimal.valueOf(config.getBigDecimalFactor())));
+        position.setLng(BigDecimal.valueOf(avlEntry.getLongitude()).divide(BigDecimal.valueOf(config.getBigDecimalFactor())));
         return position;
     }
 
