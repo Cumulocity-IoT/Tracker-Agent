@@ -21,6 +21,18 @@ spec:
         ports:
         - containerPort: 8888  # TCP Port exposed inside the container
         - containerPort: 8080  # HTTP Port exposed inside the container
+        livenessProbe:
+          httpGet:
+            path: "/health"
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: "/health"
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
