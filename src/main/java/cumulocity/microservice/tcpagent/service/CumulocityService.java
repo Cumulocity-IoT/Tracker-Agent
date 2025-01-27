@@ -57,7 +57,8 @@ public class CumulocityService {
 
     @PostConstruct
     public void init() {
-        loadDefaultTenantOptions();
+       loadDefaultTenantOptions();
+        
     }
 
     public void createDeviceIfNotExist(String imei, String connectionID) {
@@ -230,7 +231,7 @@ public class CumulocityService {
             String cmd = processCommand.extractCommandText(operation);
             if (cmd != null && !cmd.isEmpty()) {
                 updateOperationStatus(operation, OperationStatus.EXECUTING.name());
-                byte[] command = codec12Message.prepareCodec12Message((byte) 0x0C, (short) 1, cmd);
+                byte[] command = codec12Message.prepareCodec12Message(cmd);
                 processCommand.sendCommandToDevice(imei, command);
                 log.info("Sent command '{}' to connection: {}", codec12Message.bytesToHex(command), imei);
                 updateOperationStatus(operation, OperationStatus.SUCCESSFUL.name());
