@@ -1,13 +1,13 @@
-package cumulocity.microservice.tcpagent.tcp.model;
+package cumulocity.microservice.tcpagent.tcp.util;
 
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 
 @Getter
 @Setter
-@Component
+@Configuration
 @ConfigurationProperties(prefix = "codec")
 public class CodecConfig {
 
@@ -17,6 +17,7 @@ public class CodecConfig {
     private String type;
     private String commandQuantity2;
     private int fixedLength;
-    private int preambleSize;
-    private int dataSize;
+    private int preambleLength;
+    private int dataLength;
+    private int crcLength;
 }

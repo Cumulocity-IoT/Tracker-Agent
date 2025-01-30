@@ -107,7 +107,7 @@ def validate_crc(data):
 # Example Usage
 if __name__ == "__main__":
     SERVER_HOST = "localhost"#"0.tcp.in.ngrok.io"  # Replace with the server's IP address
-    SERVER_PORT = 8888#10463        # Replace with the server's listening port
+    SERVER_PORT = 8888#13563        # Replace with the server's listening port
 
     # Sample messages
     message_hex1 = '000F333536333037303432343431303134'
@@ -118,4 +118,4 @@ if __name__ == "__main__":
     
     #simulate_teltonika_device(SERVER_HOST, SERVER_PORT, message_hex1, base64_msg1)
     #simulate_teltonika_device(SERVER_HOST, SERVER_PORT, message_hex2, base64_msg2)
-    simulate_teltonika_device(SERVER_HOST, SERVER_PORT, message_hex3)
+    simulate_teltonika_device(SERVER_HOST, SERVER_PORT, message_hex3, base64_msg2)
