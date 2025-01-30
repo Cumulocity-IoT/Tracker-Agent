@@ -29,6 +29,9 @@ import cumulocity.microservice.tcpagent.tcp.model.Codec12Message;
 import cumulocity.microservice.tcpagent.tcp.model.Codec8Message;
 import cumulocity.microservice.tcpagent.tcp.model.DeviceConnectionInfo;
 import cumulocity.microservice.tcpagent.tcp.model.TCPConnectionInfo;
+import cumulocity.microservice.tcpagent.tcp.util.BytesUtil;
+import cumulocity.microservice.tcpagent.tcp.util.CodecConfig;
+import cumulocity.microservice.tcpagent.tcp.util.ConfigProperties;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,7 @@ import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
 import org.springframework.integration.ip.tcp.connection.TcpConnection;
 import org.springframework.stereotype.Service;
+
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.option.TenantOptionApi;
@@ -52,8 +56,8 @@ public class CumulocityService {
     private DeviceControlApi deviceControlApi;
     private TenantOptionApi tenantOptionApi;
     private ProcessCommand processCommand;
-    private final Codec12Message codec12Message;
     private final ConfigProperties config;
+    private final CodecConfig codecConfig;
 
     @PostConstruct
     public void init() {
@@ -231,9 +235,9 @@ public class CumulocityService {
             String cmd = processCommand.extractCommandText(operation);
             if (cmd != null && !cmd.isEmpty()) {
                 updateOperationStatus(operation, OperationStatus.EXECUTING.name());
-                byte[] command = codec12Message.prepareCodec12Message(cmd);
-                processCommand.sendCommandToDevice(imei, command);
-                log.info("Sent command '{}' to connection: {}", codec12Message.bytesToHex(command), imei);
+                Codec12Message codec12Message = new Codec12Message(cmd, codecConfig);
+                processCommand.sendCommandToDevice(imei, codec12Message.command);
+                log.info("Sent command '{}' to connection: {}", BytesUtil.bytesToHex(codec12Message.command), imei);
                 updateOperationStatus(operation, OperationStatus.SUCCESSFUL.name());
             } else {
                 log.warn("No valid command text found for operation: {}", operation);

@@ -16,11 +16,20 @@ spec:
       - name: c8y-tracker-agent
         image: tcp-agent:1.0  # Replace with your Docker image
         env:
-        - name: C8Y_BOOTSTRAP_TENANT  # Add your environment variables here
-          value: "t11974744"  # Example value for MY_ENV_VAR
+        - name: C8Y_BOOTSTRAP_TENANT
+          value: "t11974744"
+        - name: C8Y_DEFAULT_TENANT
+          value: "t11974744"
         ports:
-        - containerPort: 8888  # TCP Port exposed inside the container
-        - containerPort: 8080  # HTTP Port exposed inside the container
+        - containerPort: 8888  # TCP Port
+        - containerPort: 8080  # HTTP Port
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
         livenessProbe:
           httpGet:
             path: "/health"
@@ -42,14 +51,109 @@ spec:
   selector:
     app: c8y-tracker-agent
   ports:
-    - protocol: TCP
-      port: 8888   # Port exposed by the service
-      targetPort: 8888  # Internal port inside the container
-      name: tcp
-      nodePort: 30000
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 8080
       targetPort: 8080
-      name: http
-      nodePort: 30001
+    - name: tcp
+      protocol: TCP
+      port: 8888
+      targetPort: 8888
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-loadbalancer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-loadbalancer
+  template:
+    metadata:
+      labels:
+        app: nginx-loadbalancer
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80  # HTTP traffic
+        - containerPort: 81  # TCP traffic
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: "/"
+            port: 80
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: "/"
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  default.conf: |
+    upstream http_backend {
+        server c8y-tracker-agent-service:8080;
+    }
+    upstream tcp_backend {
+        server c8y-tracker-agent-service:8888;
+    }
+
+    server {
+        listen 80;
+        location / {
+            proxy_pass http://http_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+
+    server {
+        listen 81;
+        proxy_pass http://tcp_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx-loadbalancer
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30002
+    - name: tcp
+      protocol: TCP
+      port: 81
+      targetPort: 81
+      nodePort: 30003
   type: NodePort
