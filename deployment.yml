@@ -118,10 +118,7 @@ data:
     upstream http_backend {
         server c8y-tracker-agent-service:8080;
     }
-    upstream tcp_backend {
-        server c8y-tracker-agent-service:8888;
-    }
-
+    
     server {
         listen 80;
         location / {
@@ -131,12 +128,17 @@ data:
         }
     }
 
-    server {
-        listen 81;
-        proxy_pass http://tcp_backend;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
+    # TCP forwarding needs to be defined in a 'stream' block outside 'http'
+  stream.conf: |
+    upstream tcp_backend {
+        server c8y-tracker-agent-service:8888;
     }
+
+    server {
+        listen 8888;
+        proxy_pass tcp_backend;
+    }
+
 ---
 apiVersion: v1
 kind: Service
