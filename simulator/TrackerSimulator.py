@@ -27,7 +27,7 @@ def simulate_teltonika_device(server_host, server_port, message_hex, base64_msg=
             print(f"Connected to {server_host}:{server_port}")
 
             send_message(sock, message_hex)
-            receive_command(sock)
+            #receive_command(sock)
             
             if base64_msg:
                 decoded_bytes = base64.b64decode(base64_msg)
@@ -107,7 +107,7 @@ def validate_crc(data):
 # Example Usage
 if __name__ == "__main__":
     SERVER_HOST = "localhost"#"0.tcp.in.ngrok.io"  # Replace with the server's IP address
-    SERVER_PORT = 8888#13563        # Replace with the server's listening port
+    SERVER_PORT = 30001#13563        # Replace with the server's listening port
     #SERVER_HOST = "0.tcp.in.ngrok.io"  # Replace with the server's IP address
     #SERVER_PORT = 11125     # Replace with the server's listening port
 
