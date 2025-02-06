@@ -41,6 +41,11 @@ public class TcpServerEndpoint {
         Codec8Message msg = new Codec8Message(message.getData());
         String imei = GlobalConnectionStore.getConnectionRegistry().get(connectionID).getImei();
 
+        if(GlobalConnectionStore.getImeiToConn().get(imei)==null){
+            log.warn("Tracker Device not registered. Kindly register before sending data");
+            return new byte[]{msg.getAvlDataLength()};
+        };
+
         log.info("IMEI: {}", imei);
         log.debug("Connection Repositories: connectionRegistry={}",
                 GlobalConnectionStore.getConnectionRegistry());
@@ -52,7 +57,7 @@ public class TcpServerEndpoint {
 
     private void handleDeviceRegistration(TcpMessage message, String connectionID) {
         String imei = BytesUtil.fromByteArray(message.getData());
-        service.createDeviceIfNotExist(imei, connectionID);
+        service.updateConnectionAndProcessOperations(imei, connectionID);
     }
 
     @Bean

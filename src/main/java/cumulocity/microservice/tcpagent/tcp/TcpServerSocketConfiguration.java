@@ -81,21 +81,19 @@ public class TcpServerSocketConfiguration {
         TcpConnection connection = (TcpConnection) event.getSource();
         if(connection.isOpen()){
             GlobalConnectionStore.getConnectionRegistry().put(event.getConnectionId(), new TCPConnectionInfo(null, connection));
-            log.info("Updated Connection repo with new connection: {}", connection.toString());
+            log.info("Updated Connection Registry Maps with new connection: {}", connection.toString());
         }
     }
 
     @EventListener
     public void handleConnectionClose(TcpConnectionCloseEvent event) {
-        // Retrieve the connection once to avoid multiple lookups
-        var connectionRegistry = GlobalConnectionStore.getConnectionRegistry();
+       var connectionRegistry = GlobalConnectionStore.getConnectionRegistry();
         var connection = connectionRegistry.get(event.getConnectionId());
 
         if (connection != null && !connection.getTcpConnection().isOpen()) {
-            // Remove IMEI mapping
-            GlobalConnectionStore.getImeiToConn().remove(connection.getImei());
-
-            // Remove the connection from the registry
+            if(GlobalConnectionStore.getImeiToConn().get(connection.getImei())!=null){
+                GlobalConnectionStore.getImeiToConn().get(connection.getImei()).setConnectionId(null);;
+            }
             connectionRegistry.remove(event.getConnectionId());
 
             log.info("Closed & Removed Device connection from repo: {}", event.getConnectionId());

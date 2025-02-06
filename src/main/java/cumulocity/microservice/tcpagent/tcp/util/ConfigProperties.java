@@ -2,7 +2,9 @@ package cumulocity.microservice.tcpagent.tcp.util;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Getter
@@ -11,19 +13,20 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "tcp-agent")
 public class ConfigProperties {
 
-    private String idType;
     private String moType;
-    private String moNamePrefix;
-    private int c8yRequiredInterval;  // In minutes
-    private String deviceTenantMapping;
     private String eventTypeLocation;
     private String eventDescLocation;
     private String eventTypeTeltonika;
     private String eventDescTeltonika;
-    private String supportedOperations;
     private int bigDecimalFactor;
+    private final String cronExpression = System.getenv("C8Y_CRON_SCHEDULE");
 
     // Static fields for environment variables
     public static final String C8Y_BOOTSTRAP_TENANT = System.getenv("C8Y_BOOTSTRAP_TENANT");
     public static String C8Y_DEFAULT_TENANT = System.getenv("C8Y_DEFAULT_TENANT");
+
+    @Bean
+    public String getCronExpression() {
+        return cronExpression;
+    }
 }
