@@ -80,23 +80,17 @@ public class CumulocityService {
 
     public void updateConnectionAndProcessOperations(String imei, String connectionID) {
         try {
-            // Update connection info (assumed required regardless of device existence)
-            updateConnectionInfo(connectionID, imei);
+           updateConnectionInfo(connectionID, imei);
+           DeviceConnectionInfo existingConnection = GlobalConnectionStore.getImeiToConn().get(imei);
     
-            // Fetch existing connection
-            DeviceConnectionInfo existingConnection = GlobalConnectionStore.getImeiToConn().get(imei);
-    
-            // Early exit if the device is not registered
             if (existingConnection == null) {
                 log.warn("Tracker device {} not found. Please register it in the tenant before attempting to connect.", imei);
                 return;
             }
     
-            // Update connection ID
             existingConnection.setConnectionId(connectionID);
             log.info("Updated connection ID for device {}", imei);
     
-            // Run command in the device's tenant context
             microserviceSubscriptionsService.runForTenant(existingConnection.getTenantId(), () -> sendCommand(imei));
     
         } catch (Exception e) {
@@ -279,7 +273,6 @@ public class CumulocityService {
 
     private void loadSubscribedTenants() {
         String tenantsProperty = System.getenv("C8Y_SUBSCRIBED_TENANTS");
-        log.info("subs: {}", tenantsProperty);
         if (tenantsProperty != null && !tenantsProperty.isEmpty()) {
             List<String> tenants = Arrays.stream(tenantsProperty.split(","))
                                          .map(String::trim)
@@ -287,6 +280,7 @@ public class CumulocityService {
                                          .collect(Collectors.toList());
             GlobalConnectionStore.getTenants().addAll(tenants);
             log.info("C8Y_SUBSCRIBED_TENANTS {}",tenants);
-        }
+        }else
+            log.info("Subscribed Tenants not injected"); 
        }
 }

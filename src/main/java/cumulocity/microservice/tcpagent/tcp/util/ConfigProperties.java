@@ -19,14 +19,16 @@ public class ConfigProperties {
     private String eventTypeTeltonika;
     private String eventDescTeltonika;
     private int bigDecimalFactor;
-    private final String cronExpression = System.getenv("C8Y_CRON_SCHEDULE");
-
+    
     // Static fields for environment variables
     public static final String C8Y_BOOTSTRAP_TENANT = System.getenv("C8Y_BOOTSTRAP_TENANT");
     public static String C8Y_DEFAULT_TENANT = System.getenv("C8Y_DEFAULT_TENANT");
+    private final String CRON_EXPRESSION = 
+    (System.getenv("C8Y_CRON_SCHEDULE") != null) ? System.getenv("C8Y_CRON_SCHEDULE") : "0 */2 * * * *";
+
 
     @Bean
     public String getCronExpression() {
-        return cronExpression;
+        return CRON_EXPRESSION;
     }
 }
