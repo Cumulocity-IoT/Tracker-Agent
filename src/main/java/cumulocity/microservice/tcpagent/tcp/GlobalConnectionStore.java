@@ -1,5 +1,7 @@
 package cumulocity.microservice.tcpagent.tcp;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import cumulocity.microservice.tcpagent.tcp.model.DeviceConnectionInfo;
@@ -18,5 +20,5 @@ public class GlobalConnectionStore {
     private static final ConcurrentHashMap<String, DeviceConnectionInfo> imeiToConn = new ConcurrentHashMap<>();
 
     @Getter
-    private static final ConcurrentHashMap<String, String> imeiToTenant = new ConcurrentHashMap<>();
+    private static final List<String> tenants = new ArrayList<>();
 }

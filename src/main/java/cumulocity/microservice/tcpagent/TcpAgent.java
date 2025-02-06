@@ -1,12 +1,10 @@
 package cumulocity.microservice.tcpagent;
 
 import com.cumulocity.microservice.autoconfigure.MicroserviceApplication;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
-import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
-@Slf4j
-@EnableRetry
+@EnableScheduling
 @MicroserviceApplication
 public class TcpAgent {
     public static void main (String[] args) {

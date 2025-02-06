@@ -12,5 +12,7 @@ public class DeviceConnectionInfo {
     private String imei;
 
     private String id;
+
+    private String tenantId;
     
 }
