@@ -14,26 +14,24 @@ spec:
     spec:
       containers:
       - name: c8y-tracker-agent
-        image: tcp-agent:5.0  # Replace with your Docker image
+        image: tcp-agent:0.0.1  # Replace with your Docker image
         env:
         - name: C8Y_BOOTSTRAP_TENANT
-          value: "t11974744"
+          value: "t2105"
         - name: C8Y_DEFAULT_TENANT
-          value: "t11974744"
+          value: "t2105"
         - name: C8Y_SUBSCRIBED_TENANTS
-          value: "t11974744"
+          value: "t2105"
         - name: C8Y_MICROSERVICE_ISOLATION
           value: "MULTI_TENANT"
         - name: C8Y_BOOTSTRAP_USER
           value: "servicebootstrap_tcp-agent"
         - name: C8Y_BOOTSTRAP_PASSWORD
-          value: "TorUrdikpaoTbGL7y3va2FN6DO952WN1"
+          value: "Gcsu8W5gCvKMI0y8ME3CO3mqS35Zpf95"
         - name: C8Y_BOOTSTRAP_REGISTER
           value: "true"
         - name: C8Y_BASEURL
-          value: "https://psin.eu-latest.cumulocity.com"
-        - name: C8Y_CRON_SCHEDULE
-          value: "0 * * * * *"
+          value: "https://dev-tenant.iot.tracking.me"
         ports:
         - containerPort: 8888  # TCP Port
         - containerPort: 8080  # HTTP Port
