@@ -3,19 +3,27 @@ package cumulocity.microservice.tcpagent.service;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 import c8y.Position;
 import com.cumulocity.microservice.subscription.model.MicroserviceSubscriptionAddedEvent;
 import com.cumulocity.microservice.subscription.service.MicroserviceSubscriptionsService;
+import com.cumulocity.model.ID;
 import com.cumulocity.model.idtype.GId;
 import com.cumulocity.model.operation.OperationStatus;
 import com.cumulocity.rest.representation.event.EventRepresentation;
+import com.cumulocity.rest.representation.identity.ExternalIDRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjects;
 import com.cumulocity.rest.representation.operation.OperationRepresentation;
+import com.cumulocity.sdk.client.SDKException;
 import com.cumulocity.sdk.client.devicecontrol.DeviceControlApi;
 import com.cumulocity.sdk.client.devicecontrol.OperationFilter;
 import com.cumulocity.sdk.client.event.EventApi;
+import com.cumulocity.sdk.client.identity.IdentityApi;
+
 import cumulocity.microservice.tcpagent.tcp.GlobalConnectionStore;
 import cumulocity.microservice.tcpagent.tcp.ProcessCommand;
 import cumulocity.microservice.tcpagent.tcp.model.AvlEntry;
@@ -29,18 +37,16 @@ import cumulocity.microservice.tcpagent.tcp.util.ConfigProperties;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
 import org.springframework.context.event.EventListener;
 import org.springframework.integration.ip.tcp.connection.TcpConnection;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.InventoryFilter;
-import com.cumulocity.sdk.client.option.TenantOptionApi;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Service
@@ -48,13 +54,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CumulocityService {
 
     private InventoryApi inventoryApi;
+    private IdentityApi identityApi;
     private EventApi eventApi;
     private MicroserviceSubscriptionsService microserviceSubscriptionsService;
     private DeviceControlApi deviceControlApi;
     private ProcessCommand processCommand;
     private final ConfigProperties config;
     private final CodecConfig codecConfig;
-    private final ObjectMapper mapper;
     
 
     @PostConstruct
@@ -79,24 +85,30 @@ public class CumulocityService {
     }
 
     public void updateConnectionAndProcessOperations(String imei, String connectionID) {
-        try {
-           updateConnectionInfo(connectionID, imei);
-           DeviceConnectionInfo existingConnection = GlobalConnectionStore.getImeiToConn().get(imei);
-    
-            if (existingConnection == null) {
+    try {
+        updateConnectionInfo(connectionID, imei);
+        Map<String, DeviceConnectionInfo> imeiToConn = GlobalConnectionStore.getImeiToConn();
+
+        DeviceConnectionInfo existingConnection = imeiToConn.get(imei);
+
+        if (existingConnection == null) {
+            existingConnection = findOrFetchDeviceConnectionInfo(imei, connectionID);
+            if(existingConnection != null)
+                imeiToConn.putIfAbsent(imei, existingConnection);
+            else
                 log.warn("Tracker device {} not found. Please register it in the tenant before attempting to connect.", imei);
                 return;
-            }
-    
-            existingConnection.setConnectionId(connectionID);
-            log.info("Updated connection ID for device {}", imei);
-    
-            microserviceSubscriptionsService.runForTenant(existingConnection.getTenantId(), () -> sendCommand(imei));
-    
-        } catch (Exception e) {
-            log.error("Failed to process commands for IMEI: {}. Error: {}", imei, e.getMessage(), e);
         }
+
+        existingConnection.setConnectionId(connectionID);
+        log.info("Updated connection ID for device {}", imei);
+
+        microserviceSubscriptionsService.runForTenant(existingConnection.getTenantId(), () -> sendCommand(imei));
+
+    } catch (Exception e) {
+        log.error("Failed to process commands for IMEI: {}. Error: {}", imei, e.getMessage(), e);
     }
+}
     
     
     public void createData(Codec8Message msg, String imei) {
@@ -212,8 +224,6 @@ public class CumulocityService {
         log.info("Updated operation status of {} to {}", operation.getId().getValue(), status);
     }
 
-    //Schedule this service once in a day
-    @Scheduled(cron = "#{@getCronExpression}")
     public void loadDefaultTenantOptions() {
         for(String tenant: GlobalConnectionStore.getTenants()){     
         log.info("Loading Device for tenant Id: {}", tenant);
@@ -225,38 +235,79 @@ public class CumulocityService {
 
     private void loadDeviceToTenantMappings(String tenantId) {
         try {
-            
             inventoryApi.getManagedObjectsByFilter(new InventoryFilter().byType(config.getMoType()))
-            .get().allPages().forEach(mo -> {
-                try {
-                    // Get the 'c8y_Mobile' field directly as a JsonNode
-                    JsonNode mobileNode = mapper.readTree(mapper.writeValueAsString(mo.get("c8y_Mobile")));
-
-                    if (mobileNode != null) {
-                        // Extract the IMEI value from the 'c8y_Mobile' JSON node
-                        String imei = mobileNode.path("imei").asText(null);
-
-                        // Only process if IMEI is available
-                        if (imei != null && !imei.isEmpty()) {
-                            // Add or update the IMEI-to-connection mapping using computeIfAbsent
-                            GlobalConnectionStore.getImeiToConn().computeIfAbsent(imei, key -> {
-                                log.info("Tenant Device Map Entry: Key = {}, Value = {}", imei, mo.getId().getValue());
-                                return new DeviceConnectionInfo(null, imei, mo.getId().getValue(), tenantId);
-                            });
-                        } else {
-                            log.warn("IMEI is missing or empty for Managed Object ID {}.", mo.getId().getValue());
-                        }
-                    } else {
-                        log.warn("c8y_Mobile field is missing for Managed Object ID {}.", mo.getId().getValue());
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to process Managed Object ID {}: {}", mo.getId().getValue(), e.getMessage());
-                }
-            });
-            } catch (Exception e) {
+                .get().allPages().forEach(mo -> getImeiAndUpdateMap(mo, tenantId));
+        } catch (Exception e) {
             log.error("Failed to load device-to-tenant mapping: {}", e.getMessage(), e);
-            }
+        }
     }
+
+
+    private DeviceConnectionInfo findOrFetchDeviceConnectionInfo(String imei, String connectionID) {
+        for (String tenant : GlobalConnectionStore.getTenants()) {
+            log.info("Searching for device {} in tenant {}", imei, tenant);
+
+            DeviceConnectionInfo newConnection = microserviceSubscriptionsService.callForTenant(tenant, () -> {
+                // Avoid redundant lookups and fetch only if absent
+                return fetchDeviceConnectionInfo(imei, connectionID, tenant);
+            });
+
+            if (newConnection != null) {
+                return newConnection; // Device found, return immediately
+            }
+        }
+
+        log.warn("Device {} not found in any tenant.", imei);
+        return null; // Return null if the device is not found
+    }
+
+    private DeviceConnectionInfo fetchDeviceConnectionInfo(String imei, String connectionID, String tenantId) {
+        try {
+            ExternalIDRepresentation xId = identityApi.getExternalId(new ID(config.getIdType(), imei));
+            
+            String managedObjectId = xId.getManagedObject().getId().getValue();
+            log.info("Successfully fetched device {} in tenant {} with managed object ID: {}", imei, tenantId, managedObjectId);
+
+            return new DeviceConnectionInfo(connectionID, imei, managedObjectId, tenantId);
+
+        } catch (SDKException e) {
+            if (e.getHttpStatus() == HttpStatus.SC_NOT_FOUND) {
+                log.warn("Device {} not found in tenant {}.", imei, tenantId);
+                return null; // Return null instead of throwing if not found
+            }
+
+            log.error("Error fetching device {} in tenant {}: {}", imei, tenantId, e.getMessage());
+            throw e; // Rethrow only unexpected errors
+        }
+    }
+
+
+
+    private void getImeiAndUpdateMap(ManagedObjectRepresentation mo, String tenantId) {
+        try {
+            Iterable<ExternalIDRepresentation> externalIds = identityApi.getExternalIdsOfGlobalId(mo.getId()).get(0);
+
+            Optional<ExternalIDRepresentation> imeiOptional = StreamSupport.stream(externalIds.spliterator(), false)
+                .filter(ex -> "c8y_IMEI".equals(ex.getType()))
+                .findFirst();
+
+            imeiOptional.ifPresentOrElse(
+                ex -> mapImeiToConnection(ex.getExternalId(), mo, tenantId),
+                () -> log.warn("IMEI is missing for Managed Object ID {}.", mo.getId().getValue())
+            );
+        } catch (Exception e) {
+            log.warn("Failed to process Managed Object ID {}: {}", mo.getId().getValue(), e.getMessage());
+        }
+    }
+
+    
+    private void mapImeiToConnection(String imei, ManagedObjectRepresentation mo, String tenantId) {
+        GlobalConnectionStore.getImeiToConn().computeIfAbsent(imei, key -> {
+            log.info("Tenant Device Map Entry: IMEI = {}, ManagedObject ID = {}", imei, mo.getId().getValue());
+            return new DeviceConnectionInfo(null, imei, mo.getId().getValue(), tenantId);
+        });
+    }
+    
 
     private void setDefaultTenant() {
         try {

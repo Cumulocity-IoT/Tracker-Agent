@@ -19,7 +19,7 @@ set "OWNER=service_tcp-agent"
 :: Convert supported operations to JSON array
 set "SUPPORTED_OPS_JSON=["
 for %%O in (%SUPPORTED_OPERATIONS%) do (
-    set "SUPPORTED_OPS_JSON=!SUPPORTED_OPS_JSON!\"%%O\","
+    set "SUPPORTED_OPS_JSON=!SUPPORTED_OPS_JSON!\"%%O\"," 
 )
 set "SUPPORTED_OPS_JSON=!SUPPORTED_OPS_JSON:~0,-1!]"  :: Remove trailing comma
 
@@ -27,36 +27,44 @@ set "SUPPORTED_OPS_JSON=!SUPPORTED_OPS_JSON:~0,-1!]"  :: Remove trailing comma
 echo Device Creation Log - %DATE% %TIME% > "%LOG_FILE%"
 echo ---------------------------------------- >> "%LOG_FILE%"
 
-:: Processing CSV
-for /f "tokens=1-2 delims=[]," %%a in (%CSV_FILE%) do (
+:: Enable create mode for c8y
+:: c8y settings update mode.enableCreate true
+
+echo about to process csv file !CSV_FILE!
+:: Processing CSV (skip header)
+set "SKIP_HEADER=1"
+for /f "skip=1 tokens=1-5 delims=[]," %%a in (%CSV_FILE%) do (
     set "IMEI=%%~a"
     set "TYPE=%%~b"
-    echo Raw Data: %%a - %%b
-    echo Variables: !IMEI! - !TYPE!
+    set "MODEL=%%~c"
+    set "MANUFACTURER=%%~d"
+    set "PROTOCOL=%%~e"
+    echo Raw Data: %%a - %%b - %%c - %%d - %%e
+    echo Variables: !IMEI! - !TYPE! - !MODEL! - !MANUFACTURER! - !PROTOCOL! 
 
     :: Validate IMEI format (15 digits)
-    call :CREATE_DEVICE "!IMEI!" "!TYPE!"
-
+    call :CREATE_DEVICE "!IMEI!" "!TYPE!" "!MODEL!" "!MANUFACTURER!" "!PROTOCOL!"
 )
 
 echo 🚀 Device creation process completed. >> "%LOG_FILE%"
 endlocal
-pause
 goto :EOF  :: Ensure the script doesn't accidentally fall into a label
 
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-:: Function to create a device with retry mechanism
+:: Function to create a device
 :CREATE_DEVICE
 setlocal
 set "IMEI=%~1"
 set "TYPE=%~2"
-set "RETRIES=3"
-set "ATTEMPT=1"
+set "MODEL=%~3" 
+set "MANUFACTURER=%~4"
+set "PROTOCOL=%~5"
 set "DEVICE_NAME=Tracker-%IMEI%"
 
-:RETRY
-echo Attempt %ATTEMPT%: Creating device %DEVICE_NAME% with IMEI: %IMEI%
-for /f "usebackq tokens=*" %%D in (`c8y inventory create --name "%DEVICE_NAME%" --type "%TYPE%" --data "{\"owner\":\"%OWNER%\",\"c8y_IsDevice\":{},\"c8y_Mobile\":{\"imei\":\"%IMEI%\"},\"com_cumulocity_model_Agent\":{},\"c8y_SupportedOperations\":%SUPPORTED_OPS_JSON%,\"c8y_RequiredAvailability\":{\"responseInterval\":%REQUIRED_INTERVAL%}}" --output json ^| jq -r ".id"`) do (
+echo Variables: !IMEI! - !TYPE! - !MODEL! - !MANUFACTURER! - !PROTOCOL! 
+
+echo Creating device %DEVICE_NAME% with IMEI: %IMEI%
+for /f "usebackq tokens=*" %%D in (`c8y inventory create -f --name "%DEVICE_NAME%" --type "%TYPE%" --data "{\"owner\":\"%OWNER%\",\"c8y_Manufacturer\":\"%MANUFACTURER%\",\"c8y_IsDevice\":{},\"c8y_Mobile\":{\"imei\":\"%IMEI%\"},\"c8y_Hardware\":{\"model\":\"%MODEL%\"},\"c8y_CommunicationMode\":{\"mode\":\"%PROTOCOL%\"},\"com_cumulocity_model_Agent\":{},\"c8y_SupportedOperations\":%SUPPORTED_OPS_JSON%,\"c8y_RequiredAvailability\":{\"responseInterval\":%REQUIRED_INTERVAL%}}" --output json ^| jq -r ".id"`) do (
     set "DEVICE_ID=%%D"
 )
 
@@ -66,16 +74,9 @@ if defined DEVICE_ID (
     endlocal
     goto :EOF
 ) else (
-    echo ⚠️ Failed to create device on attempt %ATTEMPT% for IMEI: %IMEI% >> "%LOG_FILE%"
+    echo ❌ Device creation failed for IMEI: %IMEI% >> "%LOG_FILE%"
 )
 
-set /a ATTEMPT+=1
-if %ATTEMPT% LEQ %RETRIES% (
-    timeout /t 2 >nul
-    goto RETRY
-)
-
-echo ❌ Device creation failed after %RETRIES% attempts for IMEI: %IMEI% >> "%LOG_FILE%"
 endlocal
 goto :EOF
 
@@ -87,7 +88,7 @@ set "IMEI=%~1"
 set "DEVICE_ID=%~2"
 echo About to create identity with variables: !IMEI! - !DEVICE_ID!
 
-c8y identity create --name "%IMEI%" --type "c8y_IMEI" --device "%DEVICE_ID%" >nul 2>&1
+c8y identity create -f --name "%IMEI%" --type "c8y_IMEI" --device "%DEVICE_ID%" >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     echo 🔗 Identity created for IMEI: %IMEI% >> "%LOG_FILE%"
 ) else (
