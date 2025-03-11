@@ -16,6 +16,7 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.MessageChannel;
 
 import cumulocity.microservice.tcpagent.tcp.model.TCPConnectionInfo;
+import cumulocity.microservice.tcpagent.tcp.util.ConfigProperties;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -28,19 +29,23 @@ public class TcpServerSocketConfiguration {
 
     private final ApplicationEventPublisher publisher;
 
+    private final ConfigProperties config;
+
     @Value("${tcp.port:8888}")
     private int port;
 
-    public TcpServerSocketConfiguration(ApplicationEventPublisher publisher) {
+    public TcpServerSocketConfiguration(ApplicationEventPublisher publisher, ConfigProperties config) {
         this.publisher = publisher;
+        this.config=config;
     }
 
     @Bean
     public AbstractServerConnectionFactory serverConnectionFactory() {
         TcpNioServerConnectionFactory serverConnectionFactory = new TcpNioServerConnectionFactory(port);
-        serverConnectionFactory.setUsingDirectBuffers(true);
+        serverConnectionFactory.setUsingDirectBuffers(false);
         serverConnectionFactory.setDeserializer(SERIALIZER);
         serverConnectionFactory.setSingleUse(false);
+        serverConnectionFactory.setSoTimeout(config.getConnectionTimeout());
         serverConnectionFactory.setApplicationEventPublisher(publisher);
         return serverConnectionFactory;
     }
@@ -85,19 +90,24 @@ public class TcpServerSocketConfiguration {
         }
     }
 
-    @EventListener
     public void handleConnectionClose(TcpConnectionCloseEvent event) {
-       var connectionRegistry = GlobalConnectionStore.getConnectionRegistry();
+        var connectionRegistry = GlobalConnectionStore.getConnectionRegistry();
         var connection = connectionRegistry.get(event.getConnectionId());
-
-        if (connection != null && !connection.getTcpConnection().isOpen()) {
-            if(GlobalConnectionStore.getImeiToConn().get(connection.getImei())!=null){
-                GlobalConnectionStore.getImeiToConn().get(connection.getImei()).setConnectionId(null);;
-            }
-            connectionRegistry.remove(event.getConnectionId());
-
-            log.info("Closed & Removed Device connection from repo: {}", event.getConnectionId());
+    
+        if (connection == null || connection.getTcpConnection().isOpen()) {
+            return; // Exit early if connection is already closed or null
         }
-}
+    
+        // Safely update the connection mapping using computeIfPresent()
+        GlobalConnectionStore.getImeiToConn().computeIfPresent(connection.getImei(), (imei, conn) -> {
+            conn.setConnectionId(null);
+            return conn;
+        });
+    
+        connectionRegistry.remove(event.getConnectionId());
+    
+        log.info("Closed & Removed Device connection from repo: {}", event.getConnectionId());
+    }
+    
 
 }

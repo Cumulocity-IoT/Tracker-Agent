@@ -1,3 +1,16 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: c8y-tracker-agent-secret
+  namespace: default
+  labels:
+    app: c8y-tracker-agent
+stringData:
+  C8Y_BOOTSTRAP_USER: "servicebootstrap_tcp-agent"
+  C8Y_BOOTSTRAP_PASSWORD: "Gcsu8W5gCvKMI0y8ME3CO3mqS35Zpf95"
+  C8Y_BASEURL: "https://dev-tenant.iot.tracking.me"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,13 +38,22 @@ spec:
         - name: C8Y_MICROSERVICE_ISOLATION
           value: "MULTI_TENANT"
         - name: C8Y_BOOTSTRAP_USER
-          value: "servicebootstrap_tcp-agent"
+          valueFrom:
+            secretKeyRef:
+              name: c8y-tracker-agent-secret
+              key: C8Y_BOOTSTRAP_USER
         - name: C8Y_BOOTSTRAP_PASSWORD
-          value: "Gcsu8W5gCvKMI0y8ME3CO3mqS35Zpf95"
+          valueFrom:
+            secretKeyRef:
+              name: c8y-tracker-agent-secret
+              key: C8Y_BOOTSTRAP_PASSWORD
         - name: C8Y_BOOTSTRAP_REGISTER
           value: "true"
         - name: C8Y_BASEURL
-          value: "https://dev-tenant.iot.tracking.me"
+          valueFrom:
+            secretKeyRef:
+              name: c8y-tracker-agent-secret
+              key: C8Y_BASEURL
         ports:
         - containerPort: 8888  # TCP Port
         - containerPort: 8080  # HTTP Port
@@ -74,4 +96,3 @@ spec:
       port: 8888
       targetPort: 8888
       nodePort: 30001  # Exposes TCP service at port 30888
----
