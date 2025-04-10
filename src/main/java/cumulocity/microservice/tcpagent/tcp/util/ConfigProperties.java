@@ -19,6 +19,7 @@ public class ConfigProperties {
     private String eventDescLocation;
     private String eventTypeTeltonika;
     private String eventDescTeltonika;
+    private String measurementType;
     private int bigDecimalFactor;
     private int connectionTimeout;
     

@@ -2,6 +2,7 @@ package cumulocity.microservice.tcpagent.service;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import com.cumulocity.model.operation.OperationStatus;
 import com.cumulocity.rest.representation.event.EventRepresentation;
 import com.cumulocity.rest.representation.identity.ExternalIDRepresentation;
 import com.cumulocity.rest.representation.inventory.ManagedObjects;
+import com.cumulocity.rest.representation.measurement.MeasurementRepresentation;
 import com.cumulocity.rest.representation.operation.OperationRepresentation;
 import com.cumulocity.sdk.client.SDKException;
 import com.cumulocity.sdk.client.devicecontrol.DeviceControlApi;
@@ -31,9 +33,11 @@ import cumulocity.microservice.tcpagent.tcp.model.Codec12Message;
 import cumulocity.microservice.tcpagent.tcp.model.Codec8Message;
 import cumulocity.microservice.tcpagent.tcp.model.DeviceConnectionInfo;
 import cumulocity.microservice.tcpagent.tcp.model.TCPConnectionInfo;
+import cumulocity.microservice.tcpagent.tcp.model.MeasurementSeries;
 import cumulocity.microservice.tcpagent.tcp.util.BytesUtil;
 import cumulocity.microservice.tcpagent.tcp.util.CodecConfig;
 import cumulocity.microservice.tcpagent.tcp.util.ConfigProperties;
+import cumulocity.microservice.tcpagent.tcp.util.VehicleConfig;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +51,7 @@ import org.springframework.stereotype.Service;
 import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.inventory.InventoryFilter;
+import com.cumulocity.sdk.client.measurement.MeasurementApi;
 
 @Slf4j
 @Service
@@ -56,11 +61,13 @@ public class CumulocityService {
     private InventoryApi inventoryApi;
     private IdentityApi identityApi;
     private EventApi eventApi;
+    private MeasurementApi measurementApi;
     private MicroserviceSubscriptionsService microserviceSubscriptionsService;
     private DeviceControlApi deviceControlApi;
     private ProcessCommand processCommand;
     private final ConfigProperties config;
     private final CodecConfig codecConfig;
+    private final VehicleConfig vehicleConfig;
     
 
     @PostConstruct
@@ -131,7 +138,9 @@ public class CumulocityService {
             log.info("location updated for tracker IMEI: {}", imei);
         }
         createTeltonikaEvent(avlEntry, id);
-        log.info("created teltonka event for IMEI: {}", imei);
+        log.info("Created Tracker Event for IMEI: {}", imei);
+        createTeltonikaMeasurement(avlEntry, id);
+        log.info("Created Tracker Measurement for IMEI: {}", imei);
     }
 
     private void createLocationEvent(AvlEntry avlEntry, String id) {
@@ -155,6 +164,49 @@ public class CumulocityService {
         event.set(avlEntry, config.getEventTypeTeltonika());
         eventApi.create(event);
     }
+
+    private void createTeltonikaMeasurement(AvlEntry avlEntry, String id) {
+        try {
+            MeasurementRepresentation measurement = new MeasurementRepresentation();
+            measurement.setType(config.getMeasurementType());
+            measurement.setSource(ManagedObjects.asManagedObject(GId.asGId(id)));
+            measurement.setDateTime(new DateTime());
+            measurement.setProperty(config.getMeasurementType(), prepareMeasurements(avlEntry.getEvents()));
+            measurementApi.create(measurement);
+        } catch (Exception e) {
+            log.error("Error creating Teltonika measurement for ID {}: {}", id, e.getMessage(), e);
+        }
+    }
+    
+    private Map<String, MeasurementSeries> prepareMeasurements(Map<String, String> avlEntry) {
+        Map<String, MeasurementSeries> series = new HashMap<>();
+        
+        try {
+            for (Map.Entry<String, String> entry : avlEntry.entrySet()) {
+                String keyHex = entry.getKey();
+                String valueHex = entry.getValue();
+    
+                // Convert hex values to integers
+                int keyInt = BytesUtil.hextoInt(keyHex);
+                double valueInt = BytesUtil.hextoDouble(valueHex);
+    
+                // Retrieve parameter details
+                String keyStr = String.valueOf(keyInt);
+                // Add to measurement map
+                series.put(vehicleConfig.getParameters().getOrDefault(keyStr+"_name", keyStr),
+                 new MeasurementSeries(valueInt, vehicleConfig.getParameters().getOrDefault(keyStr+"_unit", "")));
+            }
+    
+            log.debug("Prepared measurements: {}", series);
+    
+        } catch (Exception e) {
+            log.error("Error preparing measurements for AVL entry: {}", avlEntry, e);
+        }
+    
+        return series;
+    }
+    
+    
 
     private void updateManagedObjectLocation(AvlEntry avlEntry, String id) {
         ManagedObjectRepresentation mo = new ManagedObjectRepresentation();
