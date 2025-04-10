@@ -78,4 +78,13 @@ public class BytesUtil {
         }
         return crc;
     }
+
+    public static int hextoInt(String s) {
+        return Integer.parseInt(s, 16);
+    }
+
+    public static double hextoDouble(String s) {
+        return (double) Long.parseLong(s, 16);
+    }
+    
 }

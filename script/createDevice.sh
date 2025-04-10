@@ -4,10 +4,10 @@
 CSV_FILE="devices.csv"
 LOG_FILE="device_creation.log"
 
-# Supported operations (comma-separated), default: c8y_Restart,c8y_Command
+# Supported operations (default: c8y_Restart, c8y_Command)
 SUPPORTED_OPERATIONS="${1:-c8y_Restart,c8y_Command}"
 
-# Required availability interval (default to 600 seconds)
+# Required availability interval (default to 10 seconds)
 REQUIRED_INTERVAL="${2:-10}"
 
 # Owner assignment
@@ -25,18 +25,6 @@ SUPPORTED_OPS_JSON+="]"
 echo "Device Creation Log - $(date)" > "$LOG_FILE"
 echo "----------------------------------------" >> "$LOG_FILE"
 
-# Processing CSV
-while IFS=',' read -r IMEI TYPE MODEL MANUFACTURER PROTOCOL; do
-    echo "Raw Data: $IMEI - $TYPE - $MODEL - $MANUFACTURER - $PROTOCOL"
-    echo "Variables: $IMEI - $TYPE - $MODEL - $MANUFACTURER - $PROTOCOL"
-
-    # Validate IMEI format (15 digits)
-    create_device "$IMEI" "$TYPE" "$MODEL" "$MANUFACTURER" "$PROTOCOL"
-
-done < "$CSV_FILE"
-
-echo "🚀 Device creation process completed." >> "$LOG_FILE"
-
 # Function to create a device with retry mechanism
 create_device() {
     local IMEI="$1"
@@ -49,7 +37,7 @@ create_device() {
     local DEVICE_NAME="Tracker-$IMEI"
 
     while (( ATTEMPT <= RETRIES )); do
-        echo "Attempt $ATTEMPT: Creating device $DEVICE_NAME with IMEI: $IMEI"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Attempt $ATTEMPT: Creating device $DEVICE_NAME with IMEI: $IMEI"
 
         DEVICE_ID=$(c8y inventory create -f --name "$DEVICE_NAME" --type "$TYPE" --data "{
             \"owner\": \"$OWNER\",
@@ -63,19 +51,19 @@ create_device() {
             \"c8y_RequiredAvailability\": {\"responseInterval\": $REQUIRED_INTERVAL}
         }" --output json | jq -r ".id")
 
-        if [[ -n "$DEVICE_ID" ]]; then
-            echo "✅ Device created with ID: $DEVICE_ID" >> "$LOG_FILE"
+        if [[ -n "$DEVICE_ID" && "$DEVICE_ID" != "null" ]]; then
+            echo "✅ $(date '+%Y-%m-%d %H:%M:%S') - Device created with ID: $DEVICE_ID" >> "$LOG_FILE"
             create_identity "$IMEI" "$DEVICE_ID"
             return
         else
-            echo "⚠️ Failed to create device on attempt $ATTEMPT for IMEI: $IMEI" >> "$LOG_FILE"
+            echo "⚠️ $(date '+%Y-%m-%d %H:%M:%S') - Failed to create device on attempt $ATTEMPT for IMEI: $IMEI" >> "$LOG_FILE"
         fi
 
         ((ATTEMPT++))
         sleep 2
     done
 
-    echo "❌ Device creation failed after $RETRIES attempts for IMEI: $IMEI" >> "$LOG_FILE"
+    echo "❌ $(date '+%Y-%m-%d %H:%M:%S') - Device creation failed after $RETRIES attempts for IMEI: $IMEI" >> "$LOG_FILE"
 }
 
 # Function to create identity
@@ -83,11 +71,34 @@ create_identity() {
     local IMEI="$1"
     local DEVICE_ID="$2"
 
-    echo "About to create identity with variables: $IMEI - $DEVICE_ID"
+    echo "🔄 $(date '+%Y-%m-%d %H:%M:%S') - Creating identity for IMEI: $IMEI"
 
     if c8y identity create -f --name "$IMEI" --type "c8y_IMEI" --device "$DEVICE_ID" >/dev/null 2>&1; then
-        echo "🔗 Identity created for IMEI: $IMEI" >> "$LOG_FILE"
+        echo "🔗 $(date '+%Y-%m-%d %H:%M:%S') - Identity created for IMEI: $IMEI" >> "$LOG_FILE"
     else
-        echo "❌ Failed to create identity for IMEI: $IMEI" >> "$LOG_FILE"
+        echo "❌ $(date '+%Y-%m-%d %H:%M:%S') - Failed to create identity for IMEI: $IMEI" >> "$LOG_FILE"
     fi
 }
+
+# Validate CSV file existence
+if [[ ! -f "$CSV_FILE" ]]; then
+    echo "🚨 Error: CSV file '$CSV_FILE' not found!"
+    exit 1
+fi
+
+# Processing CSV
+while IFS=',' read -r IMEI TYPE MODEL MANUFACTURER PROTOCOL; do
+    # Skip empty lines
+    [[ -z "$IMEI" || -z "$TYPE" || -z "$MODEL" || -z "$MANUFACTURER" || -z "$PROTOCOL" ]] && continue
+
+    # Validate IMEI (must be exactly 15 digits)
+    if [[ ! "$IMEI" =~ ^[0-9]{15}$ ]]; then
+        echo "⚠️ $(date '+%Y-%m-%d %H:%M:%S') - Invalid IMEI: $IMEI (Skipping)" >> "$LOG_FILE"
+        continue
+    fi
+
+    create_device "$IMEI" "$TYPE" "$MODEL" "$MANUFACTURER" "$PROTOCOL"
+
+done < "$CSV_FILE"
+
+echo "🚀 $(date '+%Y-%m-%d %H:%M:%S') - Device creation process completed." >> "$LOG_FILE"
