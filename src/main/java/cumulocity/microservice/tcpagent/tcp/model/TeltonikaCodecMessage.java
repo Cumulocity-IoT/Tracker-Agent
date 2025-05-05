@@ -4,17 +4,18 @@ import cumulocity.microservice.tcpagent.tcp.util.BytesUtil;
 import lombok.Data;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 @Data
-public class Codec8Message {
+public class TeltonikaCodecMessage {
 
-    private byte protocol;
+    private String protocol;
     private byte avlDataLength;
     private AvlEntry[] avlData;
 
-    public Codec8Message(byte[] data) {
-        ByteBuffer dataBuffer = ByteBuffer.wrap(data);
-        this.protocol = dataBuffer.get();
+    public TeltonikaCodecMessage(byte[] data) {
+        ByteBuffer dataBuffer = ByteBuffer.wrap(data).order(ByteOrder.BIG_ENDIAN);
+        this.protocol = BytesUtil.byteToHexString(dataBuffer.get());
         this.avlDataLength = dataBuffer.get();
         int avlDataLengthInt = BytesUtil.toUnsigned(avlDataLength);
         this.avlData = new AvlEntry[avlDataLengthInt];
@@ -22,4 +23,5 @@ public class Codec8Message {
             avlData[i] = new AvlEntry(dataBuffer);
         }
     }
+
 }

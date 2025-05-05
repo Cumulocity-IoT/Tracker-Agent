@@ -1,5 +1,317 @@
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vehicle-parameters-config
+  namespace: default
+data:
+  vehicle.parameters.1_name: DigitalInput1
+  vehicle.parameters.1_unit: 
+  vehicle.parameters.2_name: DigitalInput2
+  vehicle.parameters.2_unit: 
+  vehicle.parameters.3_name: DigitalInput3
+  vehicle.parameters.3_unit:  
+  vehicle.parameters.9_name: AnalogInput1
+  vehicle.parameters.9_unit: V
+  vehicle.parameters.16_name: TotalOdometer
+  vehicle.parameters.16_unit: m
+  vehicle.parameters.17_name: AxisX
+  vehicle.parameters.17_unit: mG
+  vehicle.parameters.18_name: AxisY
+  vehicle.parameters.18_unit: mG
+  vehicle.parameters.19_name: AxisZ
+  vehicle.parameters.19_unit: mG
+  vehicle.parameters.21_name: GSMSignal
+  vehicle.parameters.21_unit: dB
+  vehicle.parameters.25_name: BLETemperature#1
+  vehicle.parameters.25_unit: °C
+  vehicle.parameters.26_name: BLETemperature#2
+  vehicle.parameters.26_unit: °C
+  vehicle.parameters.27_name: BLETemperature#3
+  vehicle.parameters.27_unit: °C
+  vehicle.parameters.28_name: BLETemperature#4
+  vehicle.parameters.28_unit: °C
+  vehicle.parameters.66_name: ExternalVoltage
+  vehicle.parameters.66_unit: V
+  vehicle.parameters.67_name: BatteryVoltage
+  vehicle.parameters.67_unit: V
+  vehicle.parameters.68_name: BatteryCurrent
+  vehicle.parameters.68_unit: A
+  vehicle.parameters.69_name: GNSSStatus
+  vehicle.parameters.69_unit:  
+  vehicle.parameters.72_name: DallasTemperature1
+  vehicle.parameters.72_unit: °C
+  vehicle.parameters.73_name: DallasTemperature2
+  vehicle.parameters.73_unit: °C
+  vehicle.parameters.74_name: DallasTemperature3
+  vehicle.parameters.74_unit: °C
+  vehicle.parameters.76_name: DallasTemperatureID1
+  vehicle.parameters.76_unit:  
+  vehicle.parameters.77_name: DallasTemperatureID2
+  vehicle.parameters.77_unit:  
+  vehicle.parameters.78_name: iButton
+  vehicle.parameters.78_unit: 
+  vehicle.parameters.79_name: DallasTemperatureID3
+  vehicle.parameters.79_unit:  
+  vehicle.parameters.80_name: DataMode
+  vehicle.parameters.80_unit: 
+  vehicle.parameters.81_name: VehicleSpeed
+  vehicle.parameters.81_unit: km/h
+  vehicle.parameters.82_name: AcceleratorPedalPosition
+  vehicle.parameters.82_unit: '%'
+  vehicle.parameters.84_name: FuelLevel
+  vehicle.parameters.84_unit: l
+  vehicle.parameters.85_name: EngineRPM
+  vehicle.parameters.85_unit: rpm
+  vehicle.parameters.86_name: BLEHumidity#1
+  vehicle.parameters.86_unit: '%RH'
+  vehicle.parameters.89_name: FuelLevel
+  vehicle.parameters.89_unit: '%'
+  vehicle.parameters.90_name: DoorStatus
+  vehicle.parameters.90_unit: 
+  vehicle.parameters.104_name: BLEHumidity#2
+  vehicle.parameters.104_unit: '%RH'
+  vehicle.parameters.106_name: BLEHumidity#3
+  vehicle.parameters.106_unit: '%RH'
+  vehicle.parameters.108_name: BLEHumidity#4
+  vehicle.parameters.108_unit: '%RH'
+  vehicle.parameters.110_name: FuelRate
+  vehicle.parameters.110_unit: L/h
+  vehicle.parameters.111_name: AdBlueLevel
+  vehicle.parameters.111_unit: ltr
+  vehicle.parameters.113_name: BatteryLevel
+  vehicle.parameters.113_unit: '%'
+  vehicle.parameters.114_name: EngineLoad
+  vehicle.parameters.114_unit: '%'
+  vehicle.parameters.115_name: EngineTemperature
+  vehicle.parameters.115_unit: °C
+  vehicle.parameters.131_name: GapUnderHarvestingDrum
+  vehicle.parameters.131_unit: mm
+  vehicle.parameters.136_name: TachoDriverCardPresence
+  vehicle.parameters.136_unit: 
+  vehicle.parameters.137_name: Driver1States
+  vehicle.parameters.137_unit: 
+  vehicle.parameters.138_name: Driver2States
+  vehicle.parameters.138_unit: 
+  vehicle.parameters.139_name: Driver1ContinuousDrivingTime
+  vehicle.parameters.139_unit: min
+  vehicle.parameters.141_name: Driver1CumulativeBreakTime
+  vehicle.parameters.141_unit: min
+  vehicle.parameters.152_name: HVBatteryLevel
+  vehicle.parameters.152_unit: '%'
+  vehicle.parameters.160_name: DTCFaults
+  vehicle.parameters.160_unit: 
+  vehicle.parameters.175_name: AutoGeofence
+  vehicle.parameters.175_unit: 
+  vehicle.parameters.180_name: DigitalOutput2
+  vehicle.parameters.180_unit: 
+  vehicle.parameters.181_name: GNSSPDOP
+  vehicle.parameters.181_unit: 
+  vehicle.parameters.182_name: HNSSHDOP
+  vehicle.parameters.182_unit: 
+  vehicle.parameters.188_name: RetarderLoad
+  vehicle.parameters.188_unit: '%'
+  vehicle.parameters.199_name: TripOdometer
+  vehicle.parameters.199_unit: m
+  vehicle.parameters.200_name: SleepMode
+  vehicle.parameters.200_unit: 
+  vehicle.parameters.207_name: RFID
+  vehicle.parameters.207_unit: 
+  vehicle.parameters.232_name: CNGStatus
+  vehicle.parameters.232_unit: 
+  vehicle.parameters.234_name: CNGLevel
+  vehicle.parameters.234_unit: '%'
+  vehicle.parameters.235_name: OilLevel
+  vehicle.parameters.235_unit: ltr
+  vehicle.parameters.239_name: Ignition
+  vehicle.parameters.239_unit: 
+  vehicle.parameters.240_name: Movement
+  vehicle.parameters.240_unit: 
+  vehicle.parameters.247_name: CrashDetection
+  vehicle.parameters.247_unit: 
+  vehicle.parameters.252_name: Unplug
+  vehicle.parameters.252_unit: 
+  vehicle.parameters.253_name: GreendrivingType
+  vehicle.parameters.253_unit: 
+  vehicle.parameters.898_name: SSFIgnition
+  vehicle.parameters.898_unit: 
+  vehicle.parameters.652_name: SSFKeyInIgnitionLock
+  vehicle.parameters.652_unit: 
+  vehicle.parameters.899_name: SSFWebasto
+  vehicle.parameters.899_unit: 
+  vehicle.parameters.900_name: SSFEngineWorking
+  vehicle.parameters.900_unit: 
+  vehicle.parameters.901_name: SSFStandaloneEngine
+  vehicle.parameters.901_unit: 
+  vehicle.parameters.902_name: SSFReadyToDrive
+  vehicle.parameters.902_unit: 
+  vehicle.parameters.903_name: SSFEngineWorkingOnCNG
+  vehicle.parameters.903_unit: 
+  vehicle.parameters.904_name: SSFWorkMode
+  vehicle.parameters.904_unit: 
+  vehicle.parameters.905_name: SSFOperator
+  vehicle.parameters.905_unit:   
+  vehicle.parameters.906_name: SSFInterlock
+  vehicle.parameters.906_unit: 
+  vehicle.parameters.907_name: SSFEngineLockActive
+  vehicle.parameters.907_unit: 
+  vehicle.parameters.908_name: SSFRequestToLockEngine
+  vehicle.parameters.908_unit: 
+  vehicle.parameters.653_name: SSFHandbrakeIsActive
+  vehicle.parameters.653_unit: 
+  vehicle.parameters.910_name: SSFFootbrakeIsActive
+  vehicle.parameters.910_unit:  
+  vehicle.parameters.911_name: SSFClutchPushed
+  vehicle.parameters.911_unit: 
+  vehicle.parameters.912_name: SSFHazardWarningLights
+  vehicle.parameters.912_unit: 
+  vehicle.parameters.654_name: SSFFrontLeftDoorOpen
+  vehicle.parameters.654_unit: 
+  vehicle.parameters.655_name: SSFFrontRightDoorOpen
+  vehicle.parameters.655_unit: 
+  vehicle.parameters.656_name: SSFRearLeftDoorOpen
+  vehicle.parameters.656_unit: 
+  vehicle.parameters.657_name: SSFRearRightDoorOpen
+  vehicle.parameters.657_unit: 
+  vehicle.parameters.658_name: SSFTrunkDoorOpen
+  vehicle.parameters.658_unit: 
+  vehicle.parameters.913_name: SSFEngineCoverOpen
+  vehicle.parameters.913_unit: 
+  vehicle.parameters.909_name: SSFRoofOpen
+  vehicle.parameters.909_unit: 
+  vehicle.parameters.914_name: SSFChargingWirePlugged
+  vehicle.parameters.914_unit: 
+  vehicle.parameters.915_name: SSFBatteryCharging
+  vehicle.parameters.915_unit: 
+  vehicle.parameters.916_name: SSFElectricEngineState
+  vehicle.parameters.916_unit: 
+  vehicle.parameters.917_name: SSFCarClosedFactoryRemote
+  vehicle.parameters.917_unit: 
+  vehicle.parameters.662_name: SSFCarIsClosed
+  vehicle.parameters.662_unit: 
+  vehicle.parameters.918_name: SSFFactoryAlarmActuated
+  vehicle.parameters.918_unit: 
+  vehicle.parameters.919_name: SSFFactoryAlarmEmulated
+  vehicle.parameters.919_unit: 
+  vehicle.parameters.920_name: SSFSignalCloseFactoryRemote
+  vehicle.parameters.920_unit: 
+  vehicle.parameters.921_name: SSFSignalOpenFactoryRemote
+  vehicle.parameters.921_unit: 
+  vehicle.parameters.922_name: SSFRearmingSignal
+  vehicle.parameters.922_unit: 
+  vehicle.parameters.923_name: SSFTrunkDoorOpenedFactoryRemote
+  vehicle.parameters.923_unit: 
+  vehicle.parameters.924_name: SSFCANModuleInSleep
+  vehicle.parameters.924_unit: 
+  vehicle.parameters.925_name: SSFFactoryRemote3x
+  vehicle.parameters.925_unit: 
+  vehicle.parameters.926_name: SSFFactoryArmed
+  vehicle.parameters.926_unit: 
+  vehicle.parameters.660_name: SSFParkingGearActive(automaticgearbox)
+  vehicle.parameters.660_unit: 
+  vehicle.parameters.661_name: SSFReverseGearActive
+  vehicle.parameters.661_unit: 
+  vehicle.parameters.659_name: SSFNeutralGearActive(automaticgearbox)
+  vehicle.parameters.659_unit: 
+  vehicle.parameters.927_name: SSFDriveIsActive(automaticgearbox)
+  vehicle.parameters.927_unit: 
+  vehicle.parameters.1083_name: SSFEngineWorkingOnDualFuel
+  vehicle.parameters.1083_unit: 
+  vehicle.parameters.1084_name: SSFEngineWorkingOnLPG
+  vehicle.parameters.1084_unit: 
+  vehicle.parameters.928_name: CSFParkingLights
+  vehicle.parameters.928_unit: 
+  vehicle.parameters.929_name: CSFDippedHeadlights
+  vehicle.parameters.929_unit: 
+  vehicle.parameters.930_name: CSFFullBeamHeadlights
+  vehicle.parameters.930_unit: 
+  vehicle.parameters.931_name: CSFRearFogLights
+  vehicle.parameters.931_unit: 
+  vehicle.parameters.932_name: CSFFrontFogLights
+  vehicle.parameters.932_unit: 
+  vehicle.parameters.933_name: CSFAdditionalFrontLights
+  vehicle.parameters.933_unit: 
+  vehicle.parameters.934_name: CSFAdditionalRearLights
+  vehicle.parameters.934_unit: 
+  vehicle.parameters.935_name: CSFLightSignal
+  vehicle.parameters.935_unit: 
+  vehicle.parameters.936_name: CSFAirConditioning
+  vehicle.parameters.936_unit: 
+  vehicle.parameters.937_name: CSFCruiseControl
+  vehicle.parameters.937_unit: 
+  vehicle.parameters.938_name: CSFAutomaticRetarder
+  vehicle.parameters.938_unit: 
+  vehicle.parameters.177_name: AmountOfSpreadGravel
+  vehicle.parameters.177_unit: 
+  vehicle.parameters.178_name: AmountOfSpreadSand
+  vehicle.parameters.178_unit: 
+  vehicle.parameters.185_name: SaltSpreaderWorkingHours
+  vehicle.parameters.185_unit: 
+  vehicle.parameters.186_name: DistanceDuringSalting
+  vehicle.parameters.186_unit: 
+  vehicle.parameters.187_name: LoadWeight
+  vehicle.parameters.187_unit: 
+  vehicle.parameters.189_name: CruiseTime
+  vehicle.parameters.189_unit: 
+  vehicle.parameters.233_name: CNGUsed
+  vehicle.parameters.233_unit: 
+  vehicle.parameters.304_name: VehiclesRangeOnBattery
+  vehicle.parameters.304_unit: 
+  vehicle.parameters.305_name: VehiclesRangeOnAdditionalFuel
+  vehicle.parameters.305_unit: 
+  vehicle.parameters.855_name: LNGUsed
+  vehicle.parameters.855_unit: 
+  vehicle.parameters.856_name: LNGUsed(counted)
+  vehicle.parameters.856_unit: 
+  vehicle.parameters.1100_name: TotalLPGUsed
+  vehicle.parameters.1100_unit: 
+  vehicle.parameters.1101_name: TotalLPGUsedCounted
+  vehicle.parameters.1101_unit: 
+  vehicle.parameters.400_name: DistancetoNextService
+  vehicle.parameters.400_unit: 
+  vehicle.parameters.859_name: Distancefromneedofservice
+  vehicle.parameters.859_unit: 
+  vehicle.parameters.860_name: Distancefromlastservice
+  vehicle.parameters.860_unit: 
+  vehicle.parameters.864_name: Distancetonextoilservice
+  vehicle.parameters.864_unit: 
+  vehicle.parameters.866_name: LVCANVehicleRange
+  vehicle.parameters.866_unit: 
+  vehicle.parameters.867_name: LVCANTotalCNGcounted
+  vehicle.parameters.867_unit: 
+  vehicle.parameters.1079_name: TotalBaleCount
+  vehicle.parameters.1079_unit: 
+  vehicle.parameters.1080_name: BaleCount
+  vehicle.parameters.1080_unit: 
+  vehicle.parameters.1081_name: CutBaleCount
+  vehicle.parameters.1081_unit: 
+  vehicle.parameters.1082_name: BaleSlices
+  vehicle.parameters.1082_unit: 
+  vehicle.parameters.101_name: ModuleID8B
+  vehicle.parameters.101_unit: 
+  vehicle.parameters.124_name: AgriculturalMachineryFlags
+  vehicle.parameters.124_unit: 
+  vehicle.parameters.132_name: SecurityStateFlags
+  vehicle.parameters.132_unit: 
+  vehicle.parameters.147_name: Driver1IDHigh
+  vehicle.parameters.147_unit: 
+  vehicle.parameters.148_name: Driver1IDLow
+  vehicle.parameters.148_unit: 
+  vehicle.parameters.149_name: Driver2IDHigh
+  vehicle.parameters.149_unit: 
+  vehicle.parameters.150_name: Driver2IDLow
+  vehicle.parameters.150_unit: 
+  vehicle.parameters.517_name: SecurityStateFlagsP4
+  vehicle.parameters.517_unit: 
+  vehicle.parameters.518_name: ControlStateFlagsP4
+  vehicle.parameters.518_unit: 
+  vehicle.parameters.519_name: IndicatorStateFlagsP4
+  vehicle.parameters.519_unit: 
+  vehicle.parameters.520_name: AgriculturalStateFlagsP4
+  vehicle.parameters.520_unit: 
+
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: c8y-tracker-agent-secret
@@ -15,6 +327,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: c8y-tracker-agent
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -27,7 +340,11 @@ spec:
     spec:
       containers:
       - name: c8y-tracker-agent
-        image: tcp-agent:0.0.1  # Replace with your Docker image
+        image: tcp-agent:latest  # Replace with your Docker image
+        imagePullPolicy: Never
+        envFrom:
+        - configMapRef:
+            name: vehicle-parameters-config
         env:
         - name: C8Y_BOOTSTRAP_TENANT
           value: "t2105"
@@ -81,6 +398,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: c8y-tracker-agent-service
+  namespace: default
 spec:
   selector:
     app: c8y-tracker-agent

@@ -84,7 +84,11 @@ public class BytesUtil {
     }
 
     public static double hextoDouble(String s) {
-        return (double) Long.parseLong(s, 16);
+        return (double) Long.parseLong(s);
+    }
+
+    public static String byteToHexString(byte value) {
+        return String.format("%02X", value & 0xFF);
     }
     
 }

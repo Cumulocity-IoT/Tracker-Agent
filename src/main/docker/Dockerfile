@@ -9,7 +9,7 @@ RUN jlink \
 --output /opt/jdk-mini
 FROM alpine:3
 COPY --from=base /opt/jdk-mini /opt/jdk-mini
-RUN apk add  --no-cache coreutils
+# RUN apk add  --no-cache coreutils
 ENV JAVA_HOME=/opt/jdk-mini
 ENV PATH="$PATH:$JAVA_HOME/bin"
 COPY etc/ /etc/tcp-agent/

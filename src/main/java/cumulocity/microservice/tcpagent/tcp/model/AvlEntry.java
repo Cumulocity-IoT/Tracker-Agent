@@ -33,6 +33,11 @@ public class AvlEntry {
         this.eventID = BytesUtil.toUnsigned(dataBuffer.get());
         this.totalEvents = BytesUtil.toUnsigned(dataBuffer.get());
         this.events = new HashMap<>();
+        readIO(dataBuffer, 1);
+        readIO(dataBuffer, 2);
+        readIO(dataBuffer, 4);
+        readIO(dataBuffer, 8);
+        /*
         for(int valueBytes=0;valueBytes<4;valueBytes++) {
             int eventCount = BytesUtil.toUnsigned(dataBuffer.get());
             for (int i = 0; i < eventCount; i++) {
@@ -41,6 +46,22 @@ public class AvlEntry {
                 dataBuffer.get(value);
                 events.put(key, BytesUtil.bytesToHex(value));
             }
+        } */
+    }
+
+    private void readIO(ByteBuffer buffer, int size) {
+        int count = buffer.get() & 0xFF;
+        for (int i = 0; i < count; i++) {
+            int id = buffer.get() & 0xFF;
+            String key = String.valueOf(id);
+            String value = switch (size) {
+                case 1 -> String.valueOf(BytesUtil.toUnsigned(buffer.get()));
+                case 2 -> String.valueOf(BytesUtil.toUnsigned(buffer.getShort()));
+                case 4 -> String.valueOf(buffer.getInt());
+                case 8 -> String.valueOf(buffer.getLong());
+                default -> throw new IllegalStateException("Unexpected IO size: " + size);
+            };
+            events.put(key, value);
         }
     }
 }
