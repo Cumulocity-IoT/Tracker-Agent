@@ -30,7 +30,7 @@ import cumulocity.microservice.tcpagent.tcp.GlobalConnectionStore;
 import cumulocity.microservice.tcpagent.tcp.ProcessCommand;
 import cumulocity.microservice.tcpagent.tcp.model.AvlEntry;
 import cumulocity.microservice.tcpagent.tcp.model.Codec12Message;
-import cumulocity.microservice.tcpagent.tcp.model.Codec8Message;
+import cumulocity.microservice.tcpagent.tcp.model.TeltonikaCodecMessage;
 import cumulocity.microservice.tcpagent.tcp.model.DeviceConnectionInfo;
 import cumulocity.microservice.tcpagent.tcp.model.TCPConnectionInfo;
 import cumulocity.microservice.tcpagent.tcp.model.MeasurementSeries;
@@ -118,7 +118,7 @@ public class CumulocityService {
 }
     
     
-    public void createData(Codec8Message msg, String imei) {
+    public void createData(TeltonikaCodecMessage msg, String imei) {
         String tenant = GlobalConnectionStore.getImeiToConn().get(imei).getTenantId();
         String id = GlobalConnectionStore.getImeiToConn().get(imei).getId();
     
@@ -197,7 +197,7 @@ public class CumulocityService {
                  new MeasurementSeries(valueInt, vehicleConfig.getParameters().getOrDefault(keyStr+"_unit", "")));
             }
     
-            log.debug("Prepared measurements: {}", series);
+            log.info("Prepared measurements: {}", series);
     
         } catch (Exception e) {
             log.error("Error preparing measurements for AVL entry: {}", avlEntry, e);

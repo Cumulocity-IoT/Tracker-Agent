@@ -1,7 +1,7 @@
 package cumulocity.microservice.tcpagent.tcp;
 
 import cumulocity.microservice.tcpagent.service.CumulocityService;
-import cumulocity.microservice.tcpagent.tcp.model.Codec8Message;
+import cumulocity.microservice.tcpagent.tcp.model.TeltonikaCodecMessage;
 import cumulocity.microservice.tcpagent.tcp.model.TcpMessage;
 import cumulocity.microservice.tcpagent.tcp.util.BytesUtil;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class TcpServerEndpoint {
     }
 
     private byte[] handleDataMessage(TcpMessage message, String connectionID) {
-        Codec8Message msg = new Codec8Message(message.getData());
+        TeltonikaCodecMessage msg = new TeltonikaCodecMessage(message.getData());
         String imei = GlobalConnectionStore.getConnectionRegistry().get(connectionID).getImei();
 
         if(GlobalConnectionStore.getImeiToConn().get(imei)==null){
@@ -51,7 +51,7 @@ public class TcpServerEndpoint {
                 GlobalConnectionStore.getConnectionRegistry());
 
         service.createData(msg, imei);
-        log.info("Encoded data: {}", msg);
+        log.info("Encoded data: {} and dataLenth: {}", msg, BytesUtil.toUnsigned(msg.getAvlDataLength()));
         return new byte[]{msg.getAvlDataLength()};
     }
 
