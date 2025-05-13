@@ -118,26 +118,26 @@ public class CumulocityService {
 }
     
     
-    public void createData(TeltonikaCodecMessage msg, String imei) {
+    public void createData(TeltonikaCodecMessage msg, String imei, byte[] raw) {
         String tenant = GlobalConnectionStore.getImeiToConn().get(imei).getTenantId();
         String id = GlobalConnectionStore.getImeiToConn().get(imei).getId();
     
         // Run processing for the tenant and iterate over AVL entries.
         microserviceSubscriptionsService.runForTenant(tenant, () -> {
             for (AvlEntry avlEntry : msg.getAvlData()) {
-                processAvlEntry(avlEntry, id, imei);
+                processAvlEntry(avlEntry, id, imei, raw);
             }
         });
     }
 
-    private void processAvlEntry(AvlEntry avlEntry, String id, String imei) {
+    private void processAvlEntry(AvlEntry avlEntry, String id, String imei, byte[] raw) {
         if (avlEntry.getSatellites() != 0) {
             createLocationEvent(avlEntry, id);
             log.info("created location update event for IMEI: {}", imei);
             updateManagedObjectLocation(avlEntry, id);
             log.info("location updated for tracker IMEI: {}", imei);
         }
-        createTeltonikaEvent(avlEntry, id);
+        createTeltonikaEvent(avlEntry, id, raw);
         log.info("Created Tracker Event for IMEI: {}", imei);
         createTeltonikaMeasurement(avlEntry, id);
         log.info("Created Tracker Measurement for IMEI: {}", imei);
@@ -154,7 +154,7 @@ public class CumulocityService {
         eventApi.create(event);
     }
 
-    private void createTeltonikaEvent(AvlEntry avlEntry, String id) {
+    private void createTeltonikaEvent(AvlEntry avlEntry, String id, byte[] raw) {
         EventRepresentation event = new EventRepresentation();
         event.setType(config.getEventTypeTeltonika());
         event.setText(config.getEventDescTeltonika());
@@ -162,6 +162,7 @@ public class CumulocityService {
 
         event.setSource(ManagedObjects.asManagedObject(GId.asGId(id)));
         event.set(avlEntry, config.getEventTypeTeltonika());
+        event.set(BytesUtil.bytesToHex(raw),"rawPayload");
         eventApi.create(event);
     }
 
@@ -197,7 +198,7 @@ public class CumulocityService {
                  new MeasurementSeries(valueInt, vehicleConfig.getParameters().getOrDefault(keyStr+"_unit", "")));
             }
     
-            log.info("Prepared measurements: {}", series);
+            log.debug("Prepared measurements: {}", series);
     
         } catch (Exception e) {
             log.error("Error preparing measurements for AVL entry: {}", avlEntry, e);

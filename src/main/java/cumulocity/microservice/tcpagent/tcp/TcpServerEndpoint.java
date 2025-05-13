@@ -27,7 +27,7 @@ public class TcpServerEndpoint {
 
     @ServiceActivator(inputChannel = "inboundChannel")
     public byte[] process(TcpMessage message, @Header(IpHeaders.CONNECTION_ID) String connectionID) {
-        log.info("[{}] Incoming: {}", connectionID, message.getData().hashCode());
+        log.info("[{}] Incoming: {}", connectionID, BytesUtil.bytesToHex(message.getData()));
 
         if (message.getType() == TcpMessage.MessageType.DATA) {
             return handleDataMessage(message, connectionID);
@@ -50,7 +50,7 @@ public class TcpServerEndpoint {
         log.debug("Connection Repositories: connectionRegistry={}",
                 GlobalConnectionStore.getConnectionRegistry());
 
-        service.createData(msg, imei);
+        service.createData(msg, imei, message.getData());
         log.info("Encoded data: {} and dataLenth: {}", msg, BytesUtil.toUnsigned(msg.getAvlDataLength()));
         return new byte[]{msg.getAvlDataLength()};
     }

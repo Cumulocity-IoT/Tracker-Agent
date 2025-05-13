@@ -1,4 +1,5 @@
 import base64
+import binascii
 import socket
 import struct
 import crcmod
@@ -112,7 +113,7 @@ if __name__ == "__main__":
     #SERVER_HOST = "158.101.249.171"#"0.tcp.in.ngrok.io"  # Replace with the server's IP address
     #SERVER_PORT = 8888#13563        # Replace with the server's listening port
     SERVER_HOST = "localhost"  # Replace with the server's IP address
-    SERVER_PORT = 30001     # Replace with the server's listening port
+    SERVER_PORT = 8888     # Replace with the server's listening port
 
     # Sample messages
     message_hex1 = '000F333536333037303432343431303134'
@@ -130,5 +131,8 @@ if __name__ == "__main__":
     msg5 = 'AAAAAAAAAGoIAQAAAZYPDIGAABmuuw4PKQrwAu8BZhAAXQAVBu8B8AEVBAEBswBxYwtCbiIYAF1DEBVEAAAJAysZC7gaC7gbC7hWC7hoC7hqC7gC8QAApBMQAknlOgILAAAAAhg9Xx0OAAAAAEL2jUQBAAB6yg=='
     msg6='AAAAAAAAACMIAQAAAY8A0EQAAA8y/cAiRc3AAPoAWggAPAEBAQr/AAAAAQAA4Ms='
     msg7='AAAAAAAAACaOAQAAAY8A0EQAAA8ju4AgqdEAAGQAeAoALQEBAAABDwC8YU4AAQAAMvc='
-    #simulate_teltonika_device(SERVER_HOST, SERVER_PORT, message_hex6, msg2)
+    msg8= '000000000000007D8E01000001941F2D258000176817E90CDF7F44004301660E00110000001A000700EF0100150200450300010400020500030600B407000500420A0B00090C0D00110E0F0012101100131213000700C7000A0B0C0D00100E0F10110048FFF0BDC0004916171819004AFFE1DC0001AF0BDC0001A0009FBF1004A001E8480010000FE6'
+    msg9 = binascii.b2a_base64(msg8.encode()).decode().strip()
+    #msg9 = base64.b64encode(bytes.fromhex(msg8))
+    simulate_teltonika_device(SERVER_HOST, SERVER_PORT, message_hex6, msg9)
     simulate_teltonika_device(SERVER_HOST, SERVER_PORT, message_hex6, generate_codec8e_message_with_io())
