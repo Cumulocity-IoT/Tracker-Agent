@@ -1,25 +1,50 @@
 # Tracker TCP Agent Microservice
 
-## Description
-The Tracker TCP Agent microservice is designed to operate outside the Cumulocity platform due to security restrictions that prevent opening custom TCP ports on the platform. This stateless microservice can be hosted on a Kubernetes cluster, leveraging a load balancer to efficiently handle device loads.
+## 📌 Description
 
-## Connectivity Protocol
-- **Device to TCP Agent:** Uses the TCP protocol.
-- **Tracking Agent to Cumulocity:** Uses HTTPS protocol for bidirectional communication.
+The **Tracker TCP Agent microservice** operates independently from the Cumulocity platform to overcome security restrictions on custom TCP ports. This **stateless microservice** is designed to run in a Kubernetes environment using a **load balancer** to handle concurrent device connections.
 
-## Explanation
-This microservice allows tracker devices to establish TCP socket connections and buffer their data in the Codec8 data format. It supports bidirectional communication.
+## 🔗 Connectivity Protocol
 
-- When a device opens a TCP connection and sends its IMEI number, the microservice checks for any pending operations for that device and sends them back sequentially using the same TCP connection.
-- Command processing occurs only when the device sends its IMEI number. Commands are converted into the Codec12 message format before being sent to the device.
+- **Device → TCP Agent:** TCP
+- **TCP Agent → Cumulocity:** HTTPS (bidirectional)
 
-![alt text](image.png)
+## ⚙️ Functionality Overview
 
-## How It Works
-The microservice uses three maps for temporary data storage:
+- Tracker devices connect via TCP and send IMEI in CODEC 8 / 8E format.
+- The agent checks for pending commands and sends them in Codec12 format.
+- Command exchange occurs only after device identification (IMEI).
+- Supports **bidirectional** communication with Cumulocity.
+
+![TCP Agent Architecture](image.png)
+
+---
+
+## 📡 Supported Devices
+
+- **Vendor:** Teltonika  
+- **Message Protocols:**  
+  - CODEC 8  
+  - CODEC 8E  
+  - CODEC 12  
+
+---
+
+## 🔧 How It Works
+
+### 🧠 Internal State (In-Memory Maps)
 
 1. **Bootstrap Credentials**
-   - Cumulocity Microservice Bootstrap credentials must be added as a part of properties files
+   - Set in a `bootstrap.properties` file.
+   
+2. **connectionRegistry**
+   ```json
+   {
+     "connectionId": {
+       "imei": "",
+       "TCPConnection": ""
+     }
+   }
 
 2. **Build & Deploy**
    - This Microservice must be build as Docker imageand could be deployed independently as docker container or any kubernetes cluster 
@@ -61,26 +86,26 @@ The microservice uses three maps for temporary data storage:
    ```
 
 4. **imeiToConn**
-   - Stores IMEI numbers as keys and DeviceConnectionInfo objects (connection ID, Cumulocity device ID, and IMEI) as values.
+   - Stores IMEI numbers as keys and DeviceConnectionInfo objects (connection ID, Cumulocity device ID, IMEI and tenant Id) as values.
    - Populated when a device connects to the agent and used for processing commands and identifying connections for sending commands back to devices.
    ```json
    {
        "imei": {
            "id": "",
            "imei": "",
-           "connectionId": ""
+           "connectionId": "",
+           "tenantId":""
        }
    }
    ```
 
-5. **imeiToTenant**
-   - Maintains device-tenant mappings, supporting devices connected across multiple tenants.
-   - Populated during the agent’s startup based on pre-existing customer-provided mappings or defaults to a specified tenant.
+5. **Tenants**
+   - Maintains the list of tenants subscibed to this microservice.
    ```json
-   {
-       "356307042441014": "t11974744",
-       "356307042441013": "t11974744"
-   }
+   [
+    "t11974744",
+    "t11974745"
+   ]
    ```
 
 ## Device Registration
@@ -94,14 +119,17 @@ The microservice uses three maps for temporary data storage:
     }
     ```
 - On receiving an IMEI number, the agent:
-  1. Looks up the tenant option for the device-tenant mapping.
-  2. If not found, registers the device in the default tenant and updates the mapping in tenant options.
+  1. Lookup the global registry to check if device exist
+  2. If not found, tcp-agent will lookup all the subscribed tenants and check for device and update the global registery.
+  3. Still not found then log an error device not registered. please register the device in a tenant before sending data
+  4. continue thw processing
 
 ## Data Processing
-- On receiving Codec8 data:
+- On receiving Teltonika CODEC 8 or CODEC 8E data:
   1. The agent deserializes the buffered data and converts it into Cumulocity events.
   2. For each Codec8 entry, a Teltonika Location Update Event is created in Cumulocity.
   3. The tracker’s current location is updated in the inventory object.
+  4. Convert all the AVl properties in the measurement value and insert as measurement as well
 - Lcation Update Event JSON:
     ```json
     {
@@ -169,7 +197,8 @@ The microservice uses three maps for temporary data storage:
                 "speed": 11,
                 "instant": 1733995551000,
                 "longitude": 467399983
-            }
+            },
+            "raw_payload":"08120000019579AC9788001BD128570EA7A7E4029800ED120000000E06EF00F0001505C8004501010006B50009B600054231FE430FAF4400000900AE02F10000A41"
         }
     ```
 - Tracker Position Update JSON:
@@ -183,7 +212,82 @@ The microservice uses three maps for temporary data storage:
       }
     }
     ```
-    
+
+- Tracker measurement data JSON:
+    ```json
+    {
+      "measurements": [
+        {
+            "type": "Tracker",
+            "source": {
+                "id": "30495470"
+            },
+            "time": "2025-04-09T15:30:44.678+05:30",
+            "Tracker": {
+                "24": {
+                    "value": 93.0,
+                    "unit": ""
+                },
+                "25": {
+                    "value": 3000.0,
+                    "unit": ""
+                },
+                "Movement": {
+                    "value": 1.0,
+                    "unit": ""
+                },
+                "26": {
+                    "value": 3000.0,
+                    "unit": ""
+                },
+                "27": {
+                    "value": 3000.0,
+                    "unit": ""
+                },
+                "Ignition": {
+                    "value": 1.0,
+                    "unit": ""
+                },
+                "241": {
+                    "value": 42003.0,
+                    "unit": ""
+                },
+                "DigitalInput": {
+                    "value": 1.0,
+                    "unit": ""
+                },
+                "179": {
+                    "value": 0.0,
+                    "unit": ""
+                },
+                "BatteryCurrent": {
+                    "value": 0.0,
+                    "unit": ""
+                },
+                "104": {
+                    "value": 3000.0,
+                    "unit": ""
+                },
+                "106": {
+                    "value": 3000.0,
+                    "unit": ""
+                },
+                "9": {
+                    "value": 811.0,
+                    "unit": ""
+                },
+                "86": {
+                    "value": 3000.0,
+                    "unit": ""
+                },
+                "GSMSignal": {
+                    "value": 4.0,
+                    "unit": "dB"
+                }
+            }
+        }
+    }
+    ```  
 
 ## Command Processing
 - Upon receiving an IMEI number, the agent:
