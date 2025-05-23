@@ -1,7 +1,11 @@
 package cumulocity.microservice.tcpagent.tcp.util;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class BytesUtil {
 
     private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
@@ -39,6 +43,12 @@ public class BytesUtil {
     public static int toUnsigned(short s) {
         return s & 0xFFFF;
     }
+
+    public static int toUnsigned(int s) {
+        return s & 0xFFFFFFFF;
+    }
+
+    
 
     public static String fromByteArray(byte[] bytes) {
         return bytes != null ? new String(bytes, StandardCharsets.UTF_8) : "";
@@ -83,12 +93,34 @@ public class BytesUtil {
         return Integer.parseInt(s, 16);
     }
 
-    public static double hextoDouble(String s) {
-        return (double) Long.parseLong(s);
+    public static double hextoDouble(String hex) {
+        if (hex == null || hex.isEmpty() || hex.equalsIgnoreCase("NaN") || hex.equalsIgnoreCase("UNDERFLOW")) {
+            return Double.NaN;
+        }
+
+        try {
+            // Validate if hex contains only valid hex digits
+            if (!hex.matches("^[0-9a-fA-F]{1,16}$")) {
+                log.warn("Invalid hex string: {}", hex);
+                return Double.NaN;
+            }
+
+            long longBits = Long.parseUnsignedLong(hex, 16);
+            return Double.longBitsToDouble(longBits);
+
+        } catch (NumberFormatException e) {
+            log.error("Failed to convert hex to double: {}", hex, e);
+            return Double.NaN;
+        }
     }
+
 
     public static String byteToHexString(byte value) {
         return String.format("%02X", value & 0xFF);
+    }
+
+    public static byte[] intToBytes(int number) {
+        return ByteBuffer.allocate(4).putInt(number).array();
     }
     
 }

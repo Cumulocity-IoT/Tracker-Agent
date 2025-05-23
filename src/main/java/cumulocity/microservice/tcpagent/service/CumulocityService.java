@@ -85,14 +85,23 @@ public class CumulocityService {
 
     private void updateConnectionInfo(String connectionID, String imei) {
         GlobalConnectionStore.getConnectionRegistry().computeIfPresent(connectionID, (key, tcpConnectionInfo) -> {
-            tcpConnectionInfo.setImei(imei);
-            log.info("update imei to connection Registry Map: {}", imei);
-            return tcpConnectionInfo;
+        if (tcpConnectionInfo.getImei() != null && !tcpConnectionInfo.getImei().isEmpty()) {
+            log.info("IMEI already set for connection [{}]: {}", connectionID, tcpConnectionInfo.getImei());
+            return tcpConnectionInfo; // Skip update
+        }
+
+        tcpConnectionInfo.setImei(imei);
+        log.info("Updated IMEI in connection registry for [{}]: {}", connectionID, imei);
+        return tcpConnectionInfo;
         });
     }
 
     public void updateConnectionAndProcessOperations(String imei, String connectionID) {
     try {
+        if(!isValidImei(imei)){
+            log.info("Invalid IMEI: {}", imei);
+            return;
+        }
         updateConnectionInfo(connectionID, imei);
         Map<String, DeviceConnectionInfo> imeiToConn = GlobalConnectionStore.getImeiToConn();
 
@@ -100,11 +109,12 @@ public class CumulocityService {
 
         if (existingConnection == null) {
             existingConnection = findOrFetchDeviceConnectionInfo(imei, connectionID);
-            if(existingConnection != null)
-                imeiToConn.putIfAbsent(imei, existingConnection);
-            else
+            if (existingConnection == null) {
                 log.warn("Tracker device {} not found. Please register it in the tenant before attempting to connect.", imei);
                 return;
+            }
+
+            imeiToConn.putIfAbsent(imei, existingConnection);
         }
 
         existingConnection.setConnectionId(connectionID);
@@ -124,8 +134,11 @@ public class CumulocityService {
     
         // Run processing for the tenant and iterate over AVL entries.
         microserviceSubscriptionsService.runForTenant(tenant, () -> {
-            for (AvlEntry avlEntry : msg.getAvlData()) {
-                processAvlEntry(avlEntry, id, imei, raw);
+            if (msg.getAvlData() != null) {
+                for (AvlEntry avlEntry : msg.getAvlData()) {
+                    if(avlEntry != null )
+                        processAvlEntry(avlEntry, id, imei, raw);
+                }
             }
         });
     }
@@ -173,6 +186,7 @@ public class CumulocityService {
             measurement.setSource(ManagedObjects.asManagedObject(GId.asGId(id)));
             measurement.setDateTime(new DateTime());
             measurement.setProperty(config.getMeasurementType(), prepareMeasurements(avlEntry.getEvents()));
+            log.info("measurement JSON: {}",measurement);
             measurementApi.create(measurement);
         } catch (Exception e) {
             log.error("Error creating Teltonika measurement for ID {}: {}", id, e.getMessage(), e);
@@ -181,31 +195,38 @@ public class CumulocityService {
     
     private Map<String, MeasurementSeries> prepareMeasurements(Map<String, String> avlEntry) {
         Map<String, MeasurementSeries> series = new HashMap<>();
-        
+
         try {
             for (Map.Entry<String, String> entry : avlEntry.entrySet()) {
                 String keyHex = entry.getKey();
                 String valueHex = entry.getValue();
-    
+
                 // Convert hex values to integers
                 int keyInt = BytesUtil.hextoInt(keyHex);
-                double valueInt = BytesUtil.hextoDouble(valueHex);
-    
-                // Retrieve parameter details
+                double valueDouble = BytesUtil.hextoDouble(valueHex);
+
+                // Skip invalid double values
+                if (Double.isNaN(valueDouble) || Double.isInfinite(valueDouble)) {
+                    log.warn("Skipping invalid measurement value for key {}: {}", keyHex, valueHex);
+                    continue;
+                }
+
                 String keyStr = String.valueOf(keyInt);
-                // Add to measurement map
-                series.put(vehicleConfig.getParameters().getOrDefault(keyStr+"_name", keyStr),
-                 new MeasurementSeries(valueInt, vehicleConfig.getParameters().getOrDefault(keyStr+"_unit", "")));
+                String paramName = vehicleConfig.getParameters().getOrDefault(keyStr + "_name", keyStr);
+                String paramUnit = vehicleConfig.getParameters().getOrDefault(keyStr + "_unit", "");
+
+                series.put(paramName, new MeasurementSeries(valueDouble, paramUnit));
             }
-    
+
             log.debug("Prepared measurements: {}", series);
-    
+
         } catch (Exception e) {
             log.error("Error preparing measurements for AVL entry: {}", avlEntry, e);
         }
-    
+
         return series;
-    }
+}
+
     
     
 
@@ -387,4 +408,8 @@ public class CumulocityService {
         }else
             log.info("Subscribed Tenants not injected"); 
        }
+
+    private boolean isValidImei(String imei) {
+        return imei != null && imei.matches("^[a-zA-Z0-9]+$");
+    }
 }

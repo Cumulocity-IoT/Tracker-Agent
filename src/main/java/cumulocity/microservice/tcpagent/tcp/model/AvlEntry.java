@@ -13,8 +13,6 @@ import java.nio.ByteOrder;
 @Data
 public class AvlEntry {
 
-    private static final int MIN_REQUIRED_BYTES = 40;
-
     private long instant;
     private int priority;
     private int longitude;
@@ -27,29 +25,32 @@ public class AvlEntry {
     private int totalEvents;
     private Map<String, String> events = new HashMap<>();
 
-    public AvlEntry(ByteBuffer buffer) {
+    public AvlEntry(ByteBuffer buffer, byte codecId) {
         buffer.order(ByteOrder.BIG_ENDIAN);
-
-        ensureRemaining(buffer, MIN_REQUIRED_BYTES, "initial AVL fields");
-
-        this.instant = buffer.getLong();
-        this.priority = BytesUtil.toUnsigned(buffer.get());
-        this.longitude = buffer.getInt();
-        this.latitude = buffer.getInt();
-        this.altitude = BytesUtil.toUnsigned(buffer.getShort());
-        this.angle = BytesUtil.toUnsigned(buffer.getShort());
-        this.satellites = BytesUtil.toUnsigned(buffer.get());
-        this.speed = BytesUtil.toUnsigned(buffer.getShort());
-        this.eventID = BytesUtil.toUnsigned(buffer.get());
-        this.totalEvents = BytesUtil.toUnsigned(buffer.get());
-
-        try {
-            for (int size : new int[]{1, 2, 4, 8}) {
-                readIO(buffer, size);
+        
+            this.instant = buffer.getLong();
+            this.priority = BytesUtil.toUnsigned(buffer.get());
+            this.longitude = buffer.getInt();
+            this.latitude = buffer.getInt();
+            this.altitude = BytesUtil.toUnsigned(buffer.getShort());
+            this.angle = BytesUtil.toUnsigned(buffer.getShort());
+            this.satellites = BytesUtil.toUnsigned(buffer.get());
+            this.speed = BytesUtil.toUnsigned(buffer.getShort());
+            this.eventID = BytesUtil.toUnsigned(buffer.get());
+            if((codecId & 0xFF) == 0x08) {
+                this.totalEvents = BytesUtil.toUnsigned(buffer.get());
             }
-        } catch (IllegalStateException ex) {
-            log.warn("Incomplete IO parsing: {}", ex.getMessage());
-        }
+
+            
+                for (int size : new int[]{1, 2, 4, 8}) {
+                     try {
+                        readIO(buffer, size);
+                    } catch (Exception e) {
+                        log.warn("Failed to parse IO elements of size {}: {}", size, e.getMessage());
+                        break;
+                    }
+                }
+
     }
 
     private void readIO(ByteBuffer buffer, int size) {
@@ -81,5 +82,4 @@ public class AvlEntry {
         }
     }
 }
-
 
