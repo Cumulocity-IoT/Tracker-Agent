@@ -7,7 +7,7 @@ from Codec8MsgGenerator import generate_codec8_message_with_io
 
 # Constants
 SERVER_HOST = "localhost"
-SERVER_PORT = 30001
+SERVER_PORT = 8888
 
 # Message constants
 MESSAGES = {

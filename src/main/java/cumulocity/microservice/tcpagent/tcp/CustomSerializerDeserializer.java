@@ -34,6 +34,7 @@ public class  CustomSerializerDeserializer implements Serializer<byte[]>, Deseri
             log.warn("Message expected to start with four 0x00 bytes but was instead 0x{}", String.format("%08x", secondTwoBytes));
 
         int dataFieldLength = ByteBuffer.wrap(inputStream.readNBytes(4)).getInt();
+        log.info("data length: {}",dataFieldLength);
         byte[] data = inputStream.readNBytes(dataFieldLength);
         log.debug("data # {}", new String(data, StandardCharsets.UTF_8));
         inputStream.readNBytes(4); // Disregard the CRC checksum TODO: Implement CRC check
@@ -47,3 +48,5 @@ public class  CustomSerializerDeserializer implements Serializer<byte[]>, Deseri
     }
 
 }
+
+

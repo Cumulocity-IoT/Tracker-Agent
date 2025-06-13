@@ -9,6 +9,16 @@
             "projectName": "c8y-tracker-agent",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-TcpAgent<cumulocity.microservice-c8y-tracker-agent>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "cumulocity.microservice.tcpagent.TcpAgent",
+            "projectName": "cumulocity.microservice-c8y-tracker-agent",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

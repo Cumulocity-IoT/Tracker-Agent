@@ -32,12 +32,70 @@ The **Tracker TCP Agent microservice** operates independently from the Cumulocit
 
 ## 🔧 How It Works
 
-### 🧠 Internal State (In-Memory Maps)
 
-1. **Bootstrap Credentials**
-   - Set in a `bootstrap.properties` file.
+1. Create the "tcp-agent" microservice in you tenant and subscribe it
+   C8y API endpoint - [Create Application API](https://cumulocity.com/api/core/#operation/postApplicationCollectionResource)
+   ```json
+   {
+	"apiVersion": "2",
+	"version": "0.0.1",
+    "availability": "MARKET",
+    "type": "MICROSERVICE",
+    "name": "tcp-agent",
+    "key": "tcp-agent-key",
+	"provider": {
+		"name": "Cumulocity GmbH"
+	},
+	"isolation": "MULTI_TENANT",
+	"resources": {
+        "cpu": "1",
+        "memory": "512M"
+    },
+	"requiredRoles": [
+		"ROLE_INVENTORY_READ",
+		"ROLE_INVENTORY_CREATE",
+		"ROLE_INVENTORY_ADMIN",
+		"ROLE_IDENTITY_READ",
+		"ROLE_IDENTITY_ADMIN",
+		"ROLE_AUDIT_READ",
+		"ROLE_AUDIT_ADMIN",
+		"ROLE_MEASUREMENT_READ",
+		"ROLE_MEASUREMENT_ADMIN",
+		"ROLE_EVENT_READ",
+		"ROLE_EVENT_ADMIN",
+		"ROLE_DEVICE_CONTROL_READ",
+		"ROLE_DEVICE_CONTROL_ADMIN",
+		"ROLE_APPLICATION_MANAGEMENT_READ",
+		"ROLE_TENANT_MANAGEMENT_READ",
+		"ROLE_OPTION_MANAGEMENT_READ",
+		"ROLE_OPTION_MANAGEMENT_ADMIN"
+
+	],
+	"roles": [
+	],
+	"livenessProbe": {
+		"httpGet": {
+			"path": "/health",
+			"port": 80
+		},
+		"initialDelaySeconds": 30,
+		"periodSeconds": 10
+	},
+	"readinessProbe": {
+		"httpGet": {
+			"path": "/health",
+			"port": 80
+		},
+		"initialDelaySeconds": 30,
+		"periodSeconds": 10
+	}
+    } 
+   ```
+2. **Bootstrap Credentials**
+   - Set in a `deployment.yml` file.
    
-2. **connectionRegistry**
+### Internal State (In-Memory Maps)
+3. **connectionRegistry**
    ```json
    {
      "connectionId": {
@@ -46,7 +104,7 @@ The **Tracker TCP Agent microservice** operates independently from the Cumulocit
      }
    }
 
-2. **Build & Deploy**
+4. **Build & Deploy**
    - This Microservice must be build as Docker imageand could be deployed independently as docker container or any kubernetes cluster 
    - Java17, Maven 3.6 and docker latest must be installed on the machin to build this microservice docker image
    - Using below maven command this could be built
@@ -73,7 +131,7 @@ The **Tracker TCP Agent microservice** operates independently from the Cumulocit
      - Java 17 or later
      - Cumulocity Java SDK (1020.155.0 or later)
      - A cumulocity microservice must be created and subscribed on the enterprise tenant as well as other subtenants where this Tracker Agent will be interacting. This will be a dummy microservice no zip has to be uploaded it will be used by the Tracker agent to take advantage of C8Y Java SDK multi-tenancy features.
-3. **connectionRegistry**
+5. **connectionRegistry**
    - Stores TCP connection IDs as keys and a combination of IMEI and TCP connection objects as values.
    - Populated when a tracker device connects to the agent.
    ```json
@@ -85,7 +143,7 @@ The **Tracker TCP Agent microservice** operates independently from the Cumulocit
    }
    ```
 
-4. **imeiToConn**
+6. **imeiToConn**
    - Stores IMEI numbers as keys and DeviceConnectionInfo objects (connection ID, Cumulocity device ID, IMEI and tenant Id) as values.
    - Populated when a device connects to the agent and used for processing commands and identifying connections for sending commands back to devices.
    ```json
@@ -99,7 +157,7 @@ The **Tracker TCP Agent microservice** operates independently from the Cumulocit
    }
    ```
 
-5. **Tenants**
+7. **Tenants**
    - Maintains the list of tenants subscibed to this microservice.
    ```json
    [
