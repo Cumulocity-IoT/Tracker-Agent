@@ -320,8 +320,8 @@ metadata:
     app: c8y-tracker-agent
 stringData:
   C8Y_BOOTSTRAP_USER: "servicebootstrap_tcp-agent"
-  C8Y_BOOTSTRAP_PASSWORD: "<tcp-agent bootstrap password>"
-  C8Y_BASEURL: "https://yourteanant.eu-latest.cumulocity.com"
+  C8Y_BOOTSTRAP_PASSWORD: "Gcsu8W5gCvKMI0y8ME3CO3mqS35Zpf95"
+  C8Y_BASEURL: "https://dev-tenant.iot.tracking.me"
 ---
 apiVersion: apps/v1
 kind: Deployment
