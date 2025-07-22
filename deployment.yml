@@ -322,6 +322,10 @@ stringData:
   C8Y_BOOTSTRAP_USER: "servicebootstrap_tcp-agent"
   C8Y_BOOTSTRAP_PASSWORD: "Gcsu8W5gCvKMI0y8ME3CO3mqS35Zpf95"
   C8Y_BASEURL: "https://dev-tenant.iot.tracking.me"
+  C8Y_BOOTSTRAP_TENANT: "t2105"
+  C8Y_DEFAULT_TENANT: "t2105"
+  C8Y_SUBSCRIBED_TENANTS: "t2105"  #add comma separated if more than one tenant
+  C8Y_MICROSERVICE_ISOLATION: "MULTI_TENANT"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -340,20 +344,32 @@ spec:
     spec:
       containers:
       - name: c8y-tracker-agent
-        image: tcp-agent:latest  # Replace with your Docker image
+        image: docker.io/library/tcp-agent:1.0.6-SNAPSHOT
         imagePullPolicy: Never
         envFrom:
         - configMapRef:
             name: vehicle-parameters-config
         env:
         - name: C8Y_BOOTSTRAP_TENANT
-          value: "t2105"
+          valueFrom:
+            secretKeyRef:
+              name: c8y-tracker-agent-secret
+              key: C8Y_BOOTSTRAP_TENANT
         - name: C8Y_DEFAULT_TENANT
-          value: "t2105"
+          valueFrom:
+            secretKeyRef:
+              name: c8y-tracker-agent-secret
+              key: C8Y_DEFAULT_TENANT
         - name: C8Y_SUBSCRIBED_TENANTS
-          value: "t2105"
+          valueFrom:
+            secretKeyRef:
+              name: c8y-tracker-agent-secret
+              key: C8Y_SUBSCRIBED_TENANTS
         - name: C8Y_MICROSERVICE_ISOLATION
-          value: "MULTI_TENANT"
+          valueFrom:
+            secretKeyRef:
+              name: c8y-tracker-agent-secret
+              key: C8Y_MICROSERVICE_ISOLATION
         - name: C8Y_BOOTSTRAP_USER
           valueFrom:
             secretKeyRef:
