@@ -82,6 +82,7 @@ When a device connects and sends its IMEI:
 
 #### Prerequisites
 
+* **Cumulocity Tenant**: A Cumulocity Tenant
 * **Java**: Version 21 or higher
 * **Maven**: Version 3.6 or higher
 * **WSL (Windows Subsystem for Linux)**: [Install WSL](https://learn.microsoft.com/en-us/windows/wsl/install#install-wsl-command) — required if you're using a non-Linux machine
