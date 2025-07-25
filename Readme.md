@@ -300,8 +300,8 @@ Note - use this simulator to connect and publish the data from device to Cumuloc
         Refer to the official AWS Load Balancer Controller guide:\
         📖 [K8s NLB Service Guide](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/service/nlb/)
 
----
-1.  **Validate data in Cumulocity Tenant on the specific device:**
+    
+16.  **Validate data in Cumulocity Tenant on the specific device:**
 ![alt text](image-2.png)
   ![alt text](image-1.png)
 
