@@ -257,7 +257,51 @@ telnet 172.31.27.28 30001 #k3s nodeport
 ```
 Note - use this simulator to connect and publish the data from device to Cumulocity - [TCP - Simulator](https://github.com/Cumulocity-IoT/Tracker-Agent/blob/main/simulator/TrackerSimulator.py)
 
-14. **Validate data in Cumulocity Tenant on the specific device:**
+14. **Connect to the Pod via Localhost**
+
+    To expose the `c8y-tracker-agent` service running inside your K3s cluster (hosted on WSL), use port forwarding.
+
+    #### Steps:
+
+    1. Open a WSL terminal.
+
+    2.  Run the following command and keep the terminal open:
+
+        ```bash
+        kubectl port-forward svc/c8y-tracker-agent-service 8888:8888
+        ```
+
+    3.  Test the TCP connection using a simulator or with `telnet`:
+
+        ```bash
+        telnet localhost 8888
+        ```
+
+---
+
+15. **Expose the Service Over the Internet**
+
+    * ***For Development / Testing (using ngrok)***
+
+        Use [ngrok](https://ngrok.com/downloads/windows?tab=download) to tunnel your local TCP port securely:
+
+        ```bash
+        ngrok tcp 8888
+        ```
+
+        > This will provide a public TCP address that forwards traffic to your local port.
+
+
+
+    * ***For Production***
+
+        Use a **Network Load Balancer (NLB)** in Kubernetes for reliable, scalable exposure.
+
+        Refer to the official AWS Load Balancer Controller guide:\
+        📖 [K8s NLB Service Guide](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/service/nlb/)
+
+---
+1.  **Validate data in Cumulocity Tenant on the specific device:**
 ![alt text](image-2.png)
   ![alt text](image-1.png)
 
