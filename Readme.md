@@ -481,6 +481,9 @@ Note - use this simulator to connect and publish the data from device to Cumuloc
 
 * Build and deploy the customized agent.
 
-##  Contribution
+##  Licensing
+This project is licensed under the Apache 2.0 license - see https://www.apache.org/licenses/LICENSE-2.0
 
-Contributions are welcome! Please follow the standard pull request process and ensure all code changes are tested before submitting.
+These tools are provided as-is and without warranty or support. They do not constitute part of the Cumulocity product suite. Users are free to use, fork and modify them, subject to the license agreement. While Cumulocity GmbH welcomes contributions, we cannot guarantee to include every contribution in the master project.
+
+You can find additional information in the [Cumulocity Tech Community](https://techcommunity.cumulocity.com/). There is also an introductory article ([Getting started with the Cumulocity TCP Tracker Agent](https://techcommunity.cumulocity.com/t/cumulocity-tcp-tracker-agent/12355)) available.

@@ -1,0 +1,1 @@
+{"owner":"service_tcp-agent","c8y_Manufacturer":"Teltonika","c8y_IsDevice":{},"c8y_Mobile":{"imei":"353201350644935"},"c8y_Hardware":{"model":"FMC 920"},"c8y_CommunicationMode":{"mode":"TCP"},"com_cumulocity_model_Agent":{},"c8y_SupportedOperations":["c8y_Restart","c8y_Command"],"c8y_RequiredAvailability":{"responseInterval":10}}

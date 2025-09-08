@@ -320,11 +320,11 @@ metadata:
     app: c8y-tracker-agent
 stringData:
   C8Y_BOOTSTRAP_USER: "servicebootstrap_tcp-agent"
-  C8Y_BOOTSTRAP_PASSWORD: "<tcp-agent microservice bootstrap password>"
-  C8Y_BASEURL: "https://yourtenant.eulatest.cumulocity.com"
-  C8Y_BOOTSTRAP_TENANT: "<boostrap-tenantId>"
-  C8Y_DEFAULT_TENANT: "<default-tenantId>"
-  C8Y_SUBSCRIBED_TENANTS: "subscribed-tenantIds"  #add comma separated if more than one tenant
+  C8Y_BOOTSTRAP_PASSWORD: "Gcsu8W5gCvKMI0y8ME3CO3mqS35Zpf95"
+  C8Y_BASEURL: "https://dev-tenant.iot.tracking.me"
+  C8Y_BOOTSTRAP_TENANT: "t2105"
+  C8Y_DEFAULT_TENANT: "t2105"
+  C8Y_SUBSCRIBED_TENANTS: "t2105"  #add comma separated if more than one tenant
   C8Y_MICROSERVICE_ISOLATION: "MULTI_TENANT"
 ---
 apiVersion: apps/v1

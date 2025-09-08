@@ -1,5 +1,6 @@
-Device Creation Log - 25-03-2025 11:46:54.35 
----------------------------------------- 
-✅ Device created with ID: 86147222989 
-🔗 Identity created for IMEI: 353201350644935 
-🚀 Device creation process completed. 
+Device Creation Log - Fri Aug  1 16:58:13 IST 2025
+----------------------------------------
+
+⚠️ 2025-08-01 16:58:14 - Failed to create device on attempt 1 for IMEI: 353201350644935
+❌ 2025-08-01 16:58:16 - Device creation failed after 1 attempts for IMEI: 353201350644935
+🚀 2025-08-01 16:58:16 - Device creation process completed.
