@@ -39,30 +39,21 @@ jobs:
       run: |
         VERSION=${GITHUB_REF_NAME#refs/tags/}   # Extract tag name
         docker build -t tcp-agent:$VERSION -f target/docker-work/Dockerfile target/docker-work
-        docker save tcp-agent:$VERSION -o tcp-agent-$VERSION.tar
+        docker save tcp-agent:$VERSION -o target/tcp-agent-$VERSION.tar
+        mv target/*.jar target/tcp-agent-$VERSION.jar || true
+        mv target/*.zip target/tcp-agent-$VERSION.zip || true
 
-    # 6a. Upload JAR artifact
-    - name: Upload JAR artifact
+    # 6. Upload all build artifacts with consistent naming
+    - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: microservice-jar
-        path: target/*.jar
+        name: tcp-agent-${{ github.ref_name }}
+        path: |
+          target/tcp-agent-${{ github.ref_name }}.jar
+          target/tcp-agent-${{ github.ref_name }}.zip
+          target/tcp-agent-${{ github.ref_name }}.tar
 
-    # 6b. Upload ZIP artifact
-    - name: Upload ZIP artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: microservice-zip
-        path: target/*.zip
-
-    # 6c. Upload Docker tar artifact
-    - name: Upload Docker image tar
-      uses: actions/upload-artifact@v4
-      with:
-        name: docker-image-tar
-        path: tcp-agent-*.tar
-
-    # 7. Upload test reports
+    # 7. Upload test reports separately
     - name: Upload test reports
       uses: actions/upload-artifact@v4
       with:
@@ -75,18 +66,10 @@ jobs:
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
-        body: "Automated release for tag ${{ github.ref_name }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref_name }}
-        name: Release Assets
+        body: "Automated release for tcp-agent ${{ github.ref_name }}"
         files: |
-          target/*.jar
-          target/*.zip
-          tcp-agent-*.tar
+          target/tcp-agent-${{ github.ref_name }}.jar
+          target/tcp-agent-${{ github.ref_name }}.zip
+          target/tcp-agent-${{ github.ref_name }}.tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

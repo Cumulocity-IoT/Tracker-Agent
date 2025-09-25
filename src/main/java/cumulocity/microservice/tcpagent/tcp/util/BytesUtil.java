@@ -123,14 +123,18 @@ public class BytesUtil {
         return ByteBuffer.allocate(4).putInt(number).array();
     }
 
-    public static int parseAsInt(String value) {
-        long num = Long.parseLong(value);
+    public static double parseAsDouble(String value) {
+        try {
+            long num = Long.parseLong(value);
 
-        if (num < Integer.MIN_VALUE || num > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Value out of int range: " + value);
+            if (num >= Integer.MIN_VALUE && num <= Integer.MAX_VALUE) {
+                return (double) num;  
+            } else {
+                return (double) num; 
+            }
+        } catch (NumberFormatException e) {
+            return Double.parseDouble(value);
         }
-        return (int) num;
     }
-
     
 }

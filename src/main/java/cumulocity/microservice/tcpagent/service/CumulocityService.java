@@ -205,7 +205,7 @@ public class CumulocityService {
         try {
             for (Map.Entry<String, String> entry : avlEntry.entrySet()) {
                 String key = entry.getKey();
-                int valueDouble = BytesUtil.parseAsInt(entry.getValue());
+                double valueDouble = BytesUtil.parseAsDouble(entry.getValue());
 
                 String paramName = vehicleConfig.getParameters().getOrDefault(key + "_name", key);
                 String paramUnit = vehicleConfig.getParameters().getOrDefault(key + "_unit", "");
