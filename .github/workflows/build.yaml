@@ -1,0 +1,49 @@
+name: Java Microservice Build
+
+on:
+  push:
+    tags:
+      - '*'   # Trigger on any tag creation
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout code
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # 2. Set up JDK
+    - name: Set up JDK 21
+      uses: actions/setup-java@v3
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+
+    # 3. Cache Maven dependencies
+    - name: Cache Maven packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    # 4. Build & run unit tests with Maven
+    - name: Build and run tests
+      run: mvn clean test package --batch-mode
+
+    # 5. Upload the jar artifact
+    - name: Upload JAR artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: microservice-jar
+        path: target/*.jar
+
+    # 6. Upload test reports (if any)
+    - name: Upload test reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-reports
+        path: target/surefire-reports/*.xml
