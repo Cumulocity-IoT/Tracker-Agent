@@ -36,14 +36,14 @@ jobs:
 
     # 5. Upload the jar artifact
     - name: Upload JAR artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: microservice-jar
         path: target/*.jar
 
     # 6. Upload test reports (if any)
     - name: Upload test reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: test-reports
         path: target/surefire-reports/*.xml
