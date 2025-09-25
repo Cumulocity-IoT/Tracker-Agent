@@ -9,6 +9,7 @@ import java.util.stream.StreamSupport;
 
 import c8y.Position;
 import com.cumulocity.microservice.subscription.model.MicroserviceSubscriptionAddedEvent;
+import com.cumulocity.microservice.subscription.model.MicroserviceSubscriptionRemovedEvent;
 import com.cumulocity.microservice.subscription.service.MicroserviceSubscriptionsService;
 import com.cumulocity.model.ID;
 import com.cumulocity.model.idtype.GId;
@@ -78,6 +79,14 @@ public class CumulocityService {
         }else
             log.info("C8Y_DEFAULT_TENANT already set: {}", ConfigProperties.C8Y_DEFAULT_TENANT);
         loadDeviceToTenantMappings(tenantId);
+    }
+
+    @EventListener
+    public void onSubscriptionRemoved(MicroserviceSubscriptionRemovedEvent event) throws Exception {
+        String tenantId = event.getTenant();
+        log.info("Subscription removed for Tenant ID: <{}> ", tenantId); 
+        GlobalConnectionStore.getTenants().remove(tenantId);
+
     }
 
     private void updateConnectionInfo(String connectionID, String imei) {
