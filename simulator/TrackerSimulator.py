@@ -6,8 +6,8 @@ from Codec8eMsgGenerator import generate_codec8e_message_with_io
 from Codec8MsgGenerator import generate_codec8_message_with_io
 
 # Constants
-SERVER_HOST = "172.31.27.28"
-SERVER_PORT = 30001
+SERVER_HOST = "localhost" #"172.31.27.28"
+SERVER_PORT = 8888 #30001
 
 # Message constants
 MESSAGES = {
@@ -75,6 +75,7 @@ def parse_codec_12_message(byte_array):
     except Exception as e:
         return {"error": str(e)}
 
+
 if __name__ == "__main__":
-    simulate_teltonika_device(SERVER_HOST, SERVER_PORT, MESSAGES["message_hex6"], MESSAGES["msg1"])
+    simulate_teltonika_device(SERVER_HOST, SERVER_PORT, MESSAGES["message_hex6"], MESSAGES["msg2"])
     #simulate_teltonika_device(SERVER_HOST, SERVER_PORT, MESSAGES["message_hex6"], generate_codec8e_message_with_io())

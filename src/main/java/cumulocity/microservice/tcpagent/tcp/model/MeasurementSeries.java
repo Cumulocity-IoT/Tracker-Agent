@@ -9,6 +9,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class MeasurementSeries { 
 
-        private double value;
+        private int value;
         private String unit;
 }

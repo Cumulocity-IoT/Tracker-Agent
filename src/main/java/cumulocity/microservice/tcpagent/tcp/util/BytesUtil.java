@@ -122,5 +122,15 @@ public class BytesUtil {
     public static byte[] intToBytes(int number) {
         return ByteBuffer.allocate(4).putInt(number).array();
     }
+
+    public static int parseAsInt(String value) {
+        long num = Long.parseLong(value);
+
+        if (num < Integer.MIN_VALUE || num > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Value out of int range: " + value);
+        }
+        return (int) num;
+    }
+
     
 }

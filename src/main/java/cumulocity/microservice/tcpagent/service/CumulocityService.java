@@ -1,11 +1,9 @@
 package cumulocity.microservice.tcpagent.service;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 
@@ -38,7 +36,6 @@ import cumulocity.microservice.tcpagent.tcp.util.BytesUtil;
 import cumulocity.microservice.tcpagent.tcp.util.CodecConfig;
 import cumulocity.microservice.tcpagent.tcp.util.ConfigProperties;
 import cumulocity.microservice.tcpagent.tcp.util.VehicleConfig;
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -69,18 +66,18 @@ public class CumulocityService {
     private final CodecConfig codecConfig;
     private final VehicleConfig vehicleConfig;
     
-
-    @PostConstruct
-    public void init() {
-       setDefaultTenant();
-       loadSubscribedTenants();
-       loadDefaultTenantOptions();
-    }
-       
+    
     @EventListener
     public void onSubscriptionAdded(MicroserviceSubscriptionAddedEvent event) throws Exception {
-        GlobalConnectionStore.getTenants().add(event.getCredentials().getTenant());
-        log.info("Subscription added for Tenant ID: <{}> ", event.getCredentials().getTenant()); 
+        String tenantId = event.getCredentials().getTenant();
+        log.info("Subscription added for Tenant ID: <{}> ", tenantId); 
+        GlobalConnectionStore.getTenants().add(tenantId);
+        if(ConfigProperties.C8Y_DEFAULT_TENANT == null) {
+            ConfigProperties.C8Y_DEFAULT_TENANT = ConfigProperties.C8Y_BOOTSTRAP_TENANT;
+            log.info("Setting C8Y_DEFAULT_TENANT as: {}", ConfigProperties.C8Y_DEFAULT_TENANT);
+        }else
+            log.info("C8Y_DEFAULT_TENANT already set: {}", ConfigProperties.C8Y_DEFAULT_TENANT);
+        loadDeviceToTenantMappings(tenantId);
     }
 
     private void updateConnectionInfo(String connectionID, String imei) {
@@ -198,22 +195,11 @@ public class CumulocityService {
 
         try {
             for (Map.Entry<String, String> entry : avlEntry.entrySet()) {
-                String keyHex = entry.getKey();
-                String valueHex = entry.getValue();
+                String key = entry.getKey();
+                int valueDouble = BytesUtil.parseAsInt(entry.getValue());
 
-                // Convert hex values to integers
-                int keyInt = BytesUtil.hextoInt(keyHex);
-                double valueDouble = BytesUtil.hextoDouble(valueHex);
-
-                // Skip invalid double values
-                if (Double.isNaN(valueDouble) || Double.isInfinite(valueDouble)) {
-                    log.warn("Skipping invalid measurement value for key {}: {}", keyHex, valueHex);
-                    continue;
-                }
-
-                String keyStr = String.valueOf(keyInt);
-                String paramName = vehicleConfig.getParameters().getOrDefault(keyStr + "_name", keyStr);
-                String paramUnit = vehicleConfig.getParameters().getOrDefault(keyStr + "_unit", "");
+                String paramName = vehicleConfig.getParameters().getOrDefault(key + "_name", key);
+                String paramUnit = vehicleConfig.getParameters().getOrDefault(key + "_unit", "");
 
                 series.put(paramName, new MeasurementSeries(valueDouble, paramUnit));
             }
@@ -381,33 +367,6 @@ public class CumulocityService {
             return new DeviceConnectionInfo(null, imei, mo.getId().getValue(), tenantId);
         });
     }
-    
-
-    private void setDefaultTenant() {
-        try {
-            if (ConfigProperties.C8Y_DEFAULT_TENANT == null) {
-                ConfigProperties.C8Y_DEFAULT_TENANT = ConfigProperties.C8Y_BOOTSTRAP_TENANT;
-                log.info("Default tenant not found. Setting C8Y_BOOTSTRAP_TENANT as C8Y_DEFAULT_TENANT: {}", ConfigProperties.C8Y_DEFAULT_TENANT);
-            } else {
-                log.info("C8Y_DEFAULT_TENANT already set: {}", ConfigProperties.C8Y_DEFAULT_TENANT);
-            }
-        } catch (Exception e) {
-            log.error("Error while setting the default tenant: {}", e.getMessage(), e);
-        }
-    }
-
-    private void loadSubscribedTenants() {
-        String tenantsProperty = System.getenv("C8Y_SUBSCRIBED_TENANTS");
-        if (tenantsProperty != null && !tenantsProperty.isEmpty()) {
-            List<String> tenants = Arrays.stream(tenantsProperty.split(","))
-                                         .map(String::trim)
-                                         .filter(s -> !s.isEmpty())
-                                         .collect(Collectors.toList());
-            GlobalConnectionStore.getTenants().addAll(tenants);
-            log.info("C8Y_SUBSCRIBED_TENANTS {}",tenants);
-        }else
-            log.info("Subscribed Tenants not injected"); 
-       }
 
     private boolean isValidImei(String imei) {
         return imei != null && imei.matches("^[a-zA-Z0-9]+$");
