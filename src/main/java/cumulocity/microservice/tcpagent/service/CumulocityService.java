@@ -206,7 +206,10 @@ public class CumulocityService {
             for (Map.Entry<String, String> entry : avlEntry.entrySet()) {
                 String key = entry.getKey();
                 double valueDouble = BytesUtil.parseAsDouble(entry.getValue());
-
+                if (Double.isNaN(valueDouble)) {
+                    log.warn("Skipping invalid value for key {}: {}", key, entry.getValue());
+                    continue;
+                }
                 String paramName = vehicleConfig.getParameters().getOrDefault(key + "_name", key);
                 String paramUnit = vehicleConfig.getParameters().getOrDefault(key + "_unit", "");
 

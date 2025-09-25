@@ -127,14 +127,20 @@ public class BytesUtil {
         try {
             long num = Long.parseLong(value);
 
-            if (num >= Integer.MIN_VALUE && num <= Integer.MAX_VALUE) {
-                return (double) num;  
-            } else {
-                return (double) num; 
+            if (num < Integer.MIN_VALUE || num > Integer.MAX_VALUE) {
+                log.warn("Value out of int range: " + value);
             }
+
+            return (double) num;
         } catch (NumberFormatException e) {
-            return Double.parseDouble(value);
+            try {
+                return Double.parseDouble(value);
+            } catch (NumberFormatException ex) {
+                log.error("Invalid number format: " + value, ex);
+                return Double.NaN;
+            }
         }
     }
+
     
 }
