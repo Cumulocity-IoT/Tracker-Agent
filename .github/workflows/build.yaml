@@ -1,4 +1,4 @@
-name: Java Microservice Build
+name: Java Microservice Build & Release
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
       - '*'   # Trigger on any tag creation
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout code
+    # 1. Checkout repository
     - name: Checkout repository
       uses: actions/checkout@v3
 
@@ -33,7 +33,6 @@ jobs:
     # 4. Build & run unit tests
     - name: Build and run tests
       run: mvn clean test package --batch-mode
-
 
     # 5. Build Docker image and save as versioned tar
     - name: Build Docker image
@@ -69,3 +68,25 @@ jobs:
       with:
         name: test-reports
         path: target/surefire-reports/*.xml
+
+    # 8. Create GitHub Release and attach artifacts
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: "Automated release for tag ${{ github.ref_name }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release Assets
+        files: |
+          target/*.jar
+          target/*.zip
+          tcp-agent-*.tar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
