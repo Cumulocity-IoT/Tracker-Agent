@@ -30,18 +30,28 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
 
-    # 4. Build & run unit tests with Maven
+    # 4. Build & run unit tests
     - name: Build and run tests
       run: mvn clean test package --batch-mode
 
-    # 5. Upload the jar artifact
-    - name: Upload JAR artifact
+    # 6. Build Docker image and save as versioned tar
+    - name: Build Docker image
+      run: |
+        VERSION=${GITHUB_REF_NAME#refs/tags/}   # Extract tag name
+        docker build -t tcp-agent:$VERSION .
+        docker save tcp-agent:$VERSION -o tcp-agent-$VERSION.tar
+
+    # 7. Upload artifacts: JAR, ZIP, Docker tar
+    - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: microservice-jar
-        path: target/*.jar
+        name: microservice-artifacts
+        path: |
+          target/*.jar
+          target/*.zip
+          microservice-image-*.tar
 
-    # 6. Upload test reports (if any)
+    # 8. Upload test reports
     - name: Upload test reports
       uses: actions/upload-artifact@v4
       with:
