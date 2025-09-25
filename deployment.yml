@@ -359,11 +359,6 @@ spec:
             secretKeyRef:
               name: c8y-tracker-agent-secret
               key: C8Y_DEFAULT_TENANT
-        - name: C8Y_SUBSCRIBED_TENANTS
-          valueFrom:
-            secretKeyRef:
-              name: c8y-tracker-agent-secret
-              key: C8Y_SUBSCRIBED_TENANTS
         - name: C8Y_MICROSERVICE_ISOLATION
           valueFrom:
             secretKeyRef:
