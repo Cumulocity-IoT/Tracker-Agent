@@ -38,8 +38,9 @@ jobs:
     - name: Build Docker image
       run: |
         VERSION=${GITHUB_REF_NAME#refs/tags/}   # Extract tag name
-        docker build -t tcp-agent:$VERSION .
+        docker build -t tcp-agent:$VERSION -f target/docker-work/Dockerfile target/docker-work
         docker save tcp-agent:$VERSION -o tcp-agent-$VERSION.tar
+
 
     # 7. Upload artifacts: JAR, ZIP, Docker tar
     - name: Upload artifacts
@@ -49,7 +50,7 @@ jobs:
         path: |
           target/*.jar
           target/*.zip
-          microservice-image-*.tar
+          tcp-agent-*.tar
 
     # 8. Upload test reports
     - name: Upload test reports
