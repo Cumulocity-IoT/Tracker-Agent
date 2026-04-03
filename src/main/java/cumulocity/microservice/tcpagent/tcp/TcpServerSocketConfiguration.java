@@ -1,5 +1,7 @@
 package cumulocity.microservice.tcpagent.tcp;
 
+import java.net.SocketException;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +11,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.integration.annotation.IntegrationComponentScan;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.config.EnableIntegration;
+import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.ip.IpHeaders;
 import org.springframework.integration.ip.tcp.TcpInboundGateway;
 import org.springframework.integration.ip.tcp.connection.*;
@@ -18,6 +21,9 @@ import org.springframework.messaging.MessageChannel;
 import cumulocity.microservice.tcpagent.tcp.model.TCPConnectionInfo;
 import cumulocity.microservice.tcpagent.tcp.util.ConfigProperties;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.messaging.MessagingException;
+import org.springframework.integration.dsl.IntegrationFlow;
 
 @Slf4j
 @Configuration
@@ -90,6 +96,7 @@ public class TcpServerSocketConfiguration {
         }
     }
 
+    @EventListener
     public void handleConnectionClose(TcpConnectionCloseEvent event) {
         var connectionRegistry = GlobalConnectionStore.getConnectionRegistry();
         var connection = connectionRegistry.get(event.getConnectionId());
@@ -109,5 +116,23 @@ public class TcpServerSocketConfiguration {
         log.info("Closed & Removed Device connection from repo: {}", event.getConnectionId());
     }
     
+    @Bean
+    public IntegrationFlow tcpErrorFlow() {
+        return IntegrationFlow
+                .from("errorChannel")
+                .handle(message -> {
+
+                    Throwable throwable = (Throwable) message.getPayload();
+
+                    if (throwable instanceof SocketException &&
+                            throwable.getMessage().contains("Connection reset")) {
+
+                        log.debug("Client disconnected abruptly");
+                    } else {
+                        log.error("Unexpected TCP error", throwable);
+                    }
+                })
+                .get();
+    }
 
 }
