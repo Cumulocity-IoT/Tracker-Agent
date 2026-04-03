@@ -6,6 +6,9 @@ import cumulocity.microservice.tcpagent.tcp.model.TcpMessage;
 import cumulocity.microservice.tcpagent.tcp.util.BytesUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.nio.ByteBuffer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.MessageEndpoint;
@@ -38,21 +41,49 @@ public class TcpServerEndpoint {
     }
 
     private byte[] handleDataMessage(TcpMessage message, String connectionID) {
-        TeltonikaCodecMessage msg = new TeltonikaCodecMessage(message.getData());
-        String imei = GlobalConnectionStore.getConnectionRegistry().get(connectionID).getImei();
 
-        if(GlobalConnectionStore.getImeiToConn().get(imei)==null){
-            log.warn("Tracker Device not registered. Kindly register before sending data");
-            return new byte[]{msg.getAvlDataLength()};
-        };
+        // Parse Teltonika packet
+        TeltonikaCodecMessage msg = new TeltonikaCodecMessage(message.getData());
+
+        // Extract IMEI mapped to connection
+        String imei = GlobalConnectionStore
+                .getConnectionRegistry()
+                .get(connectionID)
+                .getImei();
+
+        if (imei == null) {
+            log.warn("IMEI not found for connection {}", connectionID);
+            return ByteBuffer.allocate(4).putInt(0).array(); // Send 0 ACK safely
+        }
+
+        if (GlobalConnectionStore.getImeiToConn().get(imei) == null) {
+            log.warn("Tracker device not registered. Kindly register before sending data");
+
+            // Even if not registered, MUST send ACK to avoid timeout
+            int recordCount = msg.getAvlDataLength() & 0xFF; // Convert unsigned byte to int
+            return ByteBuffer.allocate(4).putInt(recordCount).array();
+        }
 
         log.info("IMEI: {}", imei);
-        log.debug("Connection Repositories: connectionRegistry={}",
-                GlobalConnectionStore.getConnectionRegistry());
 
-        service.createData(msg, imei, message.getData());
-        log.info("Encoded data: {} and dataLenth: {}", msg, BytesUtil.toUnsigned(msg.getAvlDataLength()));
-        return new byte[]{msg.getAvlDataLength()};
+        try {
+            service.createData(msg, imei, message.getData());
+        } catch (Exception ex) {
+            log.error("Failed to process AVL data for IMEI {}", imei, ex);
+
+            // If processing fails, return 0 (device will resend)
+            return ByteBuffer.allocate(4).putInt(0).array();
+        }
+
+        // IMPORTANT: ACK must be 4-byte integer (big-endian)
+        int recordCount = msg.getAvlDataLength() & 0xFF; // Convert unsigned byte to int
+
+        log.info("Sending ACK for {} AVL records", recordCount);
+
+        return ByteBuffer
+                .allocate(4)
+                .putInt(recordCount)
+                .array();
     }
 
     private void handleDeviceRegistration(TcpMessage message, String connectionID) {
