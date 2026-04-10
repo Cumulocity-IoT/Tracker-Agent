@@ -99,7 +99,13 @@ alias kubectl='k3s kubectl'
 ```
 
 
-#### Steps
+
+## Option 1: Download Latest Release (Recommended)
+
+Download the latest released build from the GitHub Releases page:
+[Tracker Agent – Latest Release](https://github.com/Cumulocity-IoT/Tracker-Agent/releases)
+
+## Option 2: Build from Source
 
 1. **Clone Tracker agent repo:**
  Tracker Agent Git repository - [Tracker-Agent](https://github.com/Cumulocity-IoT/Tracker-Agent/tree/main)
@@ -126,26 +132,27 @@ docker build -t tcp-agent:1.0 .
 cd target/docker-work
 docker save -o tcp-agent-image.tar tcp-agent:1.0
 ```
-5. **Create the K3s images directory if it doesn't exist**
+## Deploy on K3S
+1. **Create the K3s images directory if it doesn't exist**
 ```
 sudo mkdir -p /var/lib/rancher/k3s/agent/images/
 ```
 
-6. **Copy Docker Image to k3s local registry:**
+2. **Copy Docker Image to k3s local registry:**
 
 ```
 sudo cp tcp-agent-image.tar /var/lib/rancher/k3s/agent/images/
 ```
 
-7. **Restart k3s:** - It will load image into k3s local registry
+3. **Restart k3s:** - It will load image into k3s local registry
 ```
 sudo systemctl restart k3s
 ```
-8. **Validate docker image into local k3s Registry:**
+4. **Validate docker image into local k3s Registry:**
 ```
 sudo ctr -n k8s.io --address /run/k3s/containerd/containerd.sock images ls | grep tcp-agent
 ```
-9. **Configure Cumulocity:**
+5. **Configure Cumulocity:**
   * Create and subscribe a dummy microservice (tcp-agent) on the enterprise tenant and subtenants - c8y API endpoint - [Create Application API](https://cumulocity.com/api/core/#operation/postApplicationCollectionResource)
    ```json
    {
@@ -231,33 +238,33 @@ containers:
         image: docker.io/library/tcp-agent:1.0 #Replace this with your agent docker image 
 ```
 
-10. **Deploy to Kubernetes:**
+6. **Deploy to Kubernetes:**
 
 ```
 kubectl apply -f deployment.yml
 ```
 
-11. **Validate k3s deployment pod:**
+7. **Validate k3s deployment pod:**
 
 ```
 kubectl get pods
 ```
 
-12. **Find your WSL Distro IP:**
+8. **Find your WSL Distro IP:**
 
 ```
 wsl -d Debian hostname -I
 
 172.31.27.28
 ```
-13. **Connect to TCP port:**
+9. **Connect to TCP port:**
 
 ```
 telnet 172.31.27.28 30001 #k3s nodeport
 ```
 Note - use this simulator to connect and publish the data from device to Cumulocity - [TCP - Simulator](https://github.com/Cumulocity-IoT/Tracker-Agent/blob/main/simulator/TrackerSimulator.py)
 
-14. **Connect to the Pod via Localhost**
+10. **Connect to the Pod via Localhost**
 
     To expose the `c8y-tracker-agent` service running inside your K3s cluster (hosted on WSL), use port forwarding.
 
@@ -279,7 +286,7 @@ Note - use this simulator to connect and publish the data from device to Cumuloc
 
 ---
 
-15. **Expose the Service Over the Internet**
+11. **Expose the Service Over the Internet**
 
     * ***For Development / Testing (using ngrok)***
 
@@ -301,7 +308,7 @@ Note - use this simulator to connect and publish the data from device to Cumuloc
         📖 [K8s NLB Service Guide](https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/guide/service/nlb/)
 
     
-16.  **Validate data in Cumulocity Tenant on the specific device:**
+12.  **Validate data in Cumulocity Tenant on the specific device:**
 ![alt text](image-2.png)
   ![alt text](image-1.png)
 

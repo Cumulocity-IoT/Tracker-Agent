@@ -3,17 +3,17 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>cumulocity.microservice</groupId>
 	<artifactId>c8y-tracker-agent</artifactId>
-	<version>1.0.7-SNAPSHOT</version>
+	<version>1.0.9-SNAPSHOT</version>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>21</java.version>
-		<maven.compiler.source>21</maven.compiler.source>
-		<maven.compiler.target>21</maven.compiler.target>
-		<spring-boot-dependencies.version>3.3.5</spring-boot-dependencies.version>
-		<spring-integration-dependencies.version>6.3.5</spring-integration-dependencies.version>
-		<c8y.version>1020.155.0</c8y.version>
+		<java.version>26</java.version>
+		<maven.compiler.release>26</maven.compiler.release>
+		<spring-boot-dependencies.version>3.5.11</spring-boot-dependencies.version>
+		<spring-integration-dependencies.version>6.5.0</spring-integration-dependencies.version>
+		<c8y.version>2026.24.0</c8y.version>
+		<lombok.version>1.18.44</lombok.version>
 		<microservice.name>tcp-agent</microservice.name>
 		<c8y.docker.skip>false</c8y.docker.skip>
 	</properties>
@@ -45,10 +45,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
-		<!-- Not working with spring dev tools, see issue https://github.com/SoftwareAG/cumulocity-microservice-archetype/issues/11 
-			<dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-devtools</artifactId> 
-			<scope>runtime</scope> </dependency> -->
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -74,7 +70,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.36</version>
+			<version>${lombok.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -109,18 +105,6 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.0.0-M7</version>
-				<dependencies>
-					<dependency>
-						<groupId>org.junit.jupiter</groupId>
-						<artifactId>junit-jupiter-engine</artifactId>
-						<version>5.8.2</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<plugin>
 				<groupId>com.nsn.cumulocity.clients-java</groupId>
 				<artifactId>microservice-package-maven-plugin</artifactId>
 				<version>${c8y.version}</version>
@@ -139,6 +123,21 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.13.0</version>
+				<configuration>
+					<release>${java.version}</release>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
