@@ -1,0 +1,28 @@
+{
+  "name": "Tracker Agent - Java 26 Dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "updateRemoteUserUID": true,
+  "workspaceFolder": "/workspace",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
+  "runArgs": [
+    "--init",
+    "--env-file", ".env"
+  ],
+  "forwardPorts": [8080],
+  "postCreateCommand": "mvn -version",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "redhat.vscode-yaml",
+        "pivotal.vscode-spring-boot",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}
