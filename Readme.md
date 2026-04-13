@@ -19,7 +19,7 @@ Cumulocity IoT is a secure, cloud-native platform that prioritizes controlled co
 - Command exchange occurs only after device identification (IMEI).
 - Supports **bidirectional** communication with Cumulocity.
 
-![TCP Agent Architecture](image.png)
+![TCP Agent Architecture](tracker_agent_architecture.svg)
 
 ---
 
