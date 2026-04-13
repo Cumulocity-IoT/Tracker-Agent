@@ -13,9 +13,11 @@ jobs:
       contents: write
 
     steps:
-    # Checkout repository
+    # Checkout repository with full history (IMPORTANT for changelog)
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     # Set up JDK 26 + Maven cache
     - name: Set up JDK 26
@@ -38,6 +40,34 @@ jobs:
     - name: Extract version
       id: version
       run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+    # Generate changelog automatically
+    - name: Generate Release Notes
+      id: changelog
+      run: |
+        VERSION=${GITHUB_REF_NAME}
+
+        echo "Generating changelog for $VERSION"
+
+        # Get previous tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+        if [ -z "$PREV_TAG" ]; then
+          echo "No previous tag found. Using full history."
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" )
+        else
+          echo "Previous tag found: $PREV_TAG"
+          CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)")
+        fi
+
+        echo "## 🚀 Release $VERSION" > RELEASE_NOTES.md
+        echo "" >> RELEASE_NOTES.md
+        echo "### 📋 Changes" >> RELEASE_NOTES.md
+        echo "$CHANGELOG" >> RELEASE_NOTES.md
+
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        cat RELEASE_NOTES.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     # Build Docker image
     - name: Build Docker image
@@ -79,13 +109,13 @@ jobs:
         name: test-reports
         path: target/surefire-reports/*.xml
 
-    # Create GitHub Release
+    # Create GitHub Release with generated notes
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.version.outputs.VERSION }}
         name: Release ${{ steps.version.outputs.VERSION }}
-        body: "Automated release for tcp-agent ${{ steps.version.outputs.VERSION }}"
+        body: ${{ steps.changelog.outputs.CHANGELOG }}
         files: |
           target/tcp-agent-${{ steps.version.outputs.VERSION }}.jar
           target/tcp-agent-${{ steps.version.outputs.VERSION }}.zip
