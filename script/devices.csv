@@ -1,2 +1,2 @@
-imei,deviceType,model,manufacturer,CommunicationMode
-353201350644935,c8y_Tracker,FMC 920,Teltonika,TCP
+imei,deviceType,model,manufacturer,CommunicationMode,serialNumber,iccid,imsi,firmwareVersion,hardwareRevision,customField1
+353201350644936,c8y_Tracker,FMC 920,Teltonika,TCP,SN-001,8991101200003204510,310260000000000,1.2.3,Rev-A,myCustomValue
